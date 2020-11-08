@@ -1,50 +1,130 @@
 ﻿using KEUtils.Utils;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Map_Lines {
     public partial class MainForm : Form {
         public static readonly String NL = Environment.NewLine;
-        public static readonly double MOUSE_WHEEL_ZOOM_FACTOR = .001;
-        public static readonly double ZOOM_MIN = .1;
+        public static readonly float MOUSE_WHEEL_ZOOM_FACTOR = 0.001F;
+        public static readonly float KEY_ZOOM_FACTOR = 1.1F;
+        public static readonly float ZOOM_MIN = 0.1F;
 
-        public Image OriginalImage { get; set; }
+        public Image Image { get; set; }
         public bool Panning { get; set; }
+        public bool KeyPanning { get; set; }
         public Point PanStart { get; set; }
-        double ZoomFactor { get; set; }
+        float ZoomFactor { get; set; }
+        public RectangleF ViewRectangle { get; set; }
 
         public MainForm() {
             InitializeComponent();
 
-            ZoomFactor = 1.0;
+            ZoomFactor = 1.0F;
             pictureBox.MouseWheel += new MouseEventHandler(OnPictureBoxMouseWheel);
+            this.MouseWheel += new MouseEventHandler(OnPictureBoxMouseWheel);
         }
 
         private void zoomImage() {
-            Debug.WriteLine("zoomImage: ZoomFactor=" + ZoomFactor);
-            if (OriginalImage == null) return;
-            if (pictureBox.Image != null) pictureBox.Image.Dispose();
-            Size newSize = new Size((int)(OriginalImage.Width * ZoomFactor),
-                (int)(OriginalImage.Height * ZoomFactor));
-            Debug.WriteLine("    newSize=" + newSize);
-            Bitmap zoomImage = new Bitmap(OriginalImage, newSize);
-            // This causes memory problems
-            //Graphics g = Graphics.FromImage(zoomImage);
-            //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            pictureBox.Image = zoomImage;
+            Size clientSize = pictureBox.ClientSize;
+            float newWidth = clientSize.Width * ZoomFactor;
+            float newHeight = clientSize.Height * ZoomFactor;
+            // Make it appear as if the zoom were at the center
+            float newX = ViewRectangle.X - .5F * (newWidth - ViewRectangle.Width);
+            float newY = ViewRectangle.Y - .5F * (newHeight - ViewRectangle.Height);
+            ViewRectangle = new RectangleF(newX, newY, newWidth, newHeight);
+            pictureBox.Invalidate();
+        }
+
+        private void resetViewToFit() {
+            if (Image == null || Image.Width <= 0 || Image.Height <= 0) {
+                return;
+            }
+            Size clientSize = pictureBox.ClientSize;
+            float aspect = (float)Image.Height / Image.Width;
+            float clientAspect = (float)clientSize.Height / clientSize.Width;
+            if (aspect < clientAspect) {
+                ZoomFactor = (float)Image.Width / clientSize.Width;
+            } else {
+                ZoomFactor = (float)Image.Height / clientSize.Height;
+            }
+            float newWidth = clientSize.Width * ZoomFactor;
+            float newHeight = clientSize.Height * ZoomFactor;
+            // Center it
+            float newX = .5F * (Image.Width - newWidth);
+            float newY = .5F * (Image.Height - newHeight);
+            ViewRectangle = new RectangleF(newX, newY, newWidth, newHeight);
+            pictureBox.Invalidate();
+        }
+
+        private void resetImage() {
+            resetImage(null, false);
+        }
+
+        private void resetImage(string fileName, bool replace) {
+            if (replace) {
+                if (Image != null) Image.Dispose();
+                Image = new Bitmap(fileName);
+            }
+            ZoomFactor = 1.0F;
+            Size clientSize = pictureBox.ClientSize;
+            ViewRectangle = new RectangleF(0, 0, clientSize.Width, clientSize.Height);
+            //ViewImage = new Bitmap(clientSize.Width, clientSize.Height);
+            //pictureBox.Image = ViewImage;
+            pictureBox.Invalidate();
         }
 
         private void OnFormLoad(object sender, EventArgs e) {
-            this.MouseWheel += new MouseEventHandler(OnPictureBoxMouseWheel);
+
+        }
+
+        private void OnFormShown(object sender, EventArgs e) {
+            // Load initial image
+            string fileName = @"C:\Users\evans\Documents\Map Lines\Proud Lake\Proud Lake Hiking-Biking-Bridle Trails Map.png";
+            resetImage(fileName, true);
+        }
+
+
+        private void OnFormResize(object sender, EventArgs e) {
+            Size clientSize = pictureBox.ClientSize;
+            float newWidth = clientSize.Width * ZoomFactor;
+            float newHeight = clientSize.Height * ZoomFactor;
+            ViewRectangle = new RectangleF(ViewRectangle.X, ViewRectangle.Y,
+                newWidth, newHeight);
+            pictureBox.Invalidate();
+        }
+
+        private void OnKeyDown(object sender, KeyEventArgs e) {
+            if (e.KeyCode == Keys.Space) {
+                KeyPanning = true;
+                if (!Panning) {
+                    Panning = true;
+                    pictureBox.Cursor = Cursors.Hand;
+                }
+            } else if (e.KeyCode == Keys.Oemplus) {
+                ZoomFactor /= KEY_ZOOM_FACTOR;
+                zoomImage();
+            } else if (e.KeyCode == Keys.OemMinus) {
+                ZoomFactor *= KEY_ZOOM_FACTOR;
+                zoomImage();
+            } else if (e.KeyCode == Keys.D0) {
+                if ((Control.ModifierKeys & Keys.Control) == Keys.Control) {
+                    resetViewToFit();
+                }
+            } else if (e.KeyCode == Keys.D1) {
+                if ((Control.ModifierKeys & Keys.Control) == Keys.Control) {
+                    resetImage();
+                }
+            }
+        }
+
+        private void OnKeyUp(object sender, KeyEventArgs e) {
+            if (KeyPanning) {
+                Panning = false;
+                pictureBox.Cursor = Cursors.Default;
+            }
+            KeyPanning = false;
         }
 
         private void OnOpenImageClick(object sender, EventArgs e) {
@@ -63,10 +143,7 @@ namespace Map_Lines {
             if (openFileDialog.ShowDialog() == DialogResult.OK) {
                 string fileName = openFileDialog.FileName;
                 try {
-                    if (OriginalImage != null) OriginalImage.Dispose();
-                    if (pictureBox.Image != null) pictureBox.Image.Dispose();
-                    OriginalImage = new Bitmap(fileName);
-                    pictureBox.Image = (Image)OriginalImage.Clone();
+                    resetImage(fileName, true);
                 } catch (Exception ex) {
                     Utils.excMsg("Error opening file:" + NL + fileName, ex);
                     return;
@@ -108,10 +185,10 @@ namespace Map_Lines {
         }
 
         private void OnZoomClick(object sender, EventArgs e) {
-            if (sender == toolStripMenuItem200) ZoomFactor = 2.0;
-            else if (sender == toolStripMenuItem100) ZoomFactor = 1.0;
-            else if (sender == toolStripMenuItem50) ZoomFactor = .5;
-            else if (sender == toolStripMenuItem25) ZoomFactor = .25;
+            if (sender == toolStripMenuItem200) ZoomFactor = 0.5F;
+            else if (sender == toolStripMenuItem100) ZoomFactor = 1.0F;
+            else if (sender == toolStripMenuItem50) ZoomFactor = 2.0F;
+            else if (sender == toolStripMenuItem25) ZoomFactor = 4.0F;
             zoomImage();
         }
 
@@ -124,29 +201,46 @@ namespace Map_Lines {
             }
         }
 
+        private void OnResetClick(object sender, EventArgs e) {
+            resetImage();
+        }
+
         private void OnPictureBoxMouseDown(object sender, MouseEventArgs e) {
-            if (Panning) PanStart = new Point(e.X, e.Y);
+            if (Panning) PanStart = e.Location;
         }
 
         private void OnPictureBoxMouseMove(object sender, MouseEventArgs e) {
             if (Panning) {
                 if (e.Button == MouseButtons.Left) {
-                    int deltaX = PanStart.X - e.X;
-                    int deltaY = PanStart.Y - e.Y;
-                    panelImage.AutoScrollPosition = new Point(
-                        deltaX - panelImage.AutoScrollPosition.X,
-                        deltaY - panelImage.AutoScrollPosition.Y);
+                    float deltaX = PanStart.X - e.X;
+                    float deltaY = PanStart.Y - e.Y;
+                    // Reset PanStart
+                    PanStart = e.Location;
+                    ViewRectangle = new RectangleF(ViewRectangle.X + deltaX,
+                        ViewRectangle.Y + deltaY,
+                        ViewRectangle.Width, ViewRectangle.Height);
+                    Debug.WriteLine("OnPictureBoxMouseMove:"
+                        + NL + " e=(" + e.X + "," + e.Y + ")"
+                        + NL + " PanStart=(" + PanStart.X + "," + PanStart.Y + ")"
+                        + NL + " delta=(" + deltaX + "," + deltaY + ")"
+                        + NL + "    ViewRectangle=" + ViewRectangle);
+                    pictureBox.Invalidate();
                 }
             }
         }
 
         private void OnPictureBoxMouseWheel(object sender, MouseEventArgs e) {
             Debug.WriteLine("OnPictureBoxMouseWheel: ZoomFactor=" + ZoomFactor);
-            if (!Panning) {
-                ZoomFactor += e.Delta * MOUSE_WHEEL_ZOOM_FACTOR;
-                if (ZoomFactor < ZOOM_MIN) ZoomFactor = ZOOM_MIN;
-                zoomImage();
-            }
+            ZoomFactor *= 1 + e.Delta * MOUSE_WHEEL_ZOOM_FACTOR;
+            zoomImage();
+        }
+
+        private void OnPictureBoxPaint(object sender, PaintEventArgs e) {
+            if (Image == null) return;
+            Graphics g = e.Graphics;
+            g.Clear(pictureBox.BackColor);
+            g.DrawImage(Image, pictureBox.ClientRectangle, ViewRectangle,
+                GraphicsUnit.Pixel);
         }
     }
 }
