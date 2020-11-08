@@ -1,7 +1,9 @@
-﻿using KEUtils.Utils;
+﻿using KEUtils.About;
+using KEUtils.Utils;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace Map_Lines {
@@ -241,6 +243,18 @@ namespace Map_Lines {
             g.Clear(pictureBox.BackColor);
             g.DrawImage(Image, pictureBox.ClientRectangle, ViewRectangle,
                 GraphicsUnit.Pixel);
+        }
+
+        private void OnHelpAboutClick(object sender, EventArgs e) {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            Image image = null;
+            //try {
+            //    image = Image.FromFile(@".\Help\GPXViewer256.png");
+            //} catch (Exception ex) {
+            //    Utils.excMsg("Failed to get AboutBox image", ex);
+            //}
+            AboutBox dlg = new AboutBox("About Map Lines", image, assembly);
+            dlg.ShowDialog();
         }
     }
 }
