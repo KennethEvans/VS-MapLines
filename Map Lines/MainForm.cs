@@ -1,7 +1,4 @@
-﻿#define USE_STARTUP_FILE
-
-using KEUtils.About;
-using KEUtils.InputDialog;
+﻿using KEUtils.About;
 using KEUtils.Utils;
 using System;
 using System.Diagnostics;
@@ -9,7 +6,6 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using static MapLines.MapCalibration;
 
@@ -19,7 +15,7 @@ namespace MapLines {
         public static readonly float MOUSE_WHEEL_ZOOM_FACTOR = 0.001F;
         public static readonly float KEY_ZOOM_FACTOR = 1.1F;
         public static readonly float ZOOM_MIN = 0.1F;
-        public static readonly float LINE_WIDTH = 4;
+        public static readonly float LINE_WIDTH = 1;
 
         public Image Image { get; set; }
         public Image LinesImage { get; set; }
@@ -175,7 +171,6 @@ namespace MapLines {
                 MapData data = MapCalibration.DataList[0];
                 line.addPoint(new Point(data.X, data.Y));
             }
-
 #if false
 // Prompt for the description
             InputDialog dlg = new InputDialog("Description", "Enter a description:");
@@ -250,21 +245,31 @@ namespace MapLines {
         }
 
         private void OnFormShown(object sender, EventArgs e) {
-#if USE_STARTUP_FILE
-            // Load initial image
-            string fileName = @"C:\Users\evans\Documents\Map Lines\Proud Lake\Proud Lake Hiking-Biking-Bridle Trails Map.png";
-            resetImage(fileName, true);
-            // Load the calibration
-            string calibFileName = Path.ChangeExtension(fileName, ".calib");
+            // This needs to be none in Shown not Load as the sizes aren't
+            // right then.
+            string imageFileName = Properties.Settings.Default.LastImageFile;
+            string calibFileName = Properties.Settings.Default.LastCalibFile;
             try {
-                MapCalibration = new MapCalibration();
-                MapCalibration.read(calibFileName);
+                // Load last image
+                if (File.Exists(imageFileName)) {
+                    resetImage(imageFileName, true);
+                }
             } catch (Exception ex) {
-                Utils.excMsg("Error opening calib file:" + NL
+                Utils.excMsg("Error opening last image file:" + NL
+                    + imageFileName, ex);
+                return;
+            }
+            try { 
+            // Load last calibration
+                if (File.Exists(calibFileName)) {
+                    MapCalibration = new MapCalibration();
+                    MapCalibration.read(calibFileName);
+                }
+            } catch (Exception ex) {
+                Utils.excMsg("Error opening last calib file:" + NL
                     + calibFileName, ex);
                 return;
             }
-#endif
         }
 
         private void OnFormResize(object sender, EventArgs e) {
@@ -322,6 +327,8 @@ namespace MapLines {
                 string fileName = openFileDialog.FileName;
                 try {
                     resetImage(fileName, true);
+                    Properties.Settings.Default.LastImageFile = fileName;
+                    Properties.Settings.Default.Save();
                 } catch (Exception ex) {
                     Utils.excMsg("Error opening file:" + NL + fileName, ex);
                     return;
@@ -337,6 +344,8 @@ namespace MapLines {
                             MapCalibration = new MapCalibration();
                             MapCalibration.read(calibFileName);
                             redrawLines();
+                            Properties.Settings.Default.LastCalibFile = calibFileName;
+                            Properties.Settings.Default.Save();
                         } catch (Exception ex) {
                             Utils.excMsg("Error opening calib file:" + NL
                                 + calibFileName, ex);
@@ -356,13 +365,15 @@ namespace MapLines {
             openFileDialog.CheckFileExists = true;
             openFileDialog.CheckPathExists = true;
             if (openFileDialog.ShowDialog() == DialogResult.OK) {
-                string fileName = openFileDialog.FileName;
+                string calibFileName = openFileDialog.FileName;
                 try {
                     MapCalibration = new MapCalibration();
-                    MapCalibration.read(fileName);
+                    MapCalibration.read(calibFileName);
                     redrawLines();
+                    Properties.Settings.Default.LastCalibFile = calibFileName;
+                    Properties.Settings.Default.Save();
                 } catch (Exception ex) {
-                    Utils.excMsg("Error opening file:" + NL + fileName, ex);
+                    Utils.excMsg("Error opening file:" + NL + calibFileName, ex);
                     return;
                 }
             }

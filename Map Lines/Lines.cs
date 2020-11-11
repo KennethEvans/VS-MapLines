@@ -23,46 +23,6 @@ namespace MapLines {
         /// </summary>
         public static readonly double DEFAULT_SPEED = 10;
 
-        // GPS Constants
-
-        /// <summary>
-        /// Nominal radius of the earth in miles. The radius actually varies from
-        ///  3937 to 3976 mi.
-        /// </summary>
-        public const double REARTH = 3956;
-        /// <summary>
-        /// Multiplier to convert miles to nautical miles.
-        /// </summary>
-        public const double MI2NMI = 1.852; // Exact
-        /// <summary>
-        /// Multiplier to convert degrees to radians.
-        /// </summary>
-        public const double DEG2RAD = Math.PI / 180.0;
-        /// <summary>
-        /// Multiplier to convert feet to miles.
-        /// </summary>
-        public const double FT2MI = 1.0 / 5280.0;
-        /// <summary>
-        /// Multiplier to convert meters to miles.
-        /// </summary>
-        public const double M2MI = .00062137119224;
-        /// <summary>
-        /// Multiplier to convert kilometers to miles.
-        /// </summary>
-        public const double KM2MI = .001 * M2MI;
-        /// <summary>
-        /// Multiplier to convert meters to feet.
-        /// </summary>
-        public const double M2FT = 3.280839895;
-        /// <summary>
-        /// Multiplier to convert sec to hours.
-        /// </summary>
-        public const double SEC2HR = 1.0 / 3600.0;
-        /// <summary>
-        /// Multiplier to convert millisec to hours.
-        /// </summary>
-        public const double MS2HR = .001 * SEC2HR;
-
         public Lines() {
 #if TEST
             lines.Add(new Line(
@@ -206,8 +166,8 @@ namespace MapLines {
                                 lon0 = vals[0];
                                 lat0 = vals[1];
                             } else {
-                                dist = Math.Abs(M2MI *
-                                    greatCircleDistance(lat0, lon0, vals[1], vals[0]));
+                                dist = Math.Abs(Gps.M2MI *
+                                    Gps.greatCircleDistance(lat0, lon0, vals[1], vals[0]));
                                 time = (long)(dist / DEFAULT_SPEED * 3600.0 * 1000.0);
                                 newTime.AddMilliseconds(time);
                                 lon0 = vals[0];
@@ -229,36 +189,7 @@ namespace MapLines {
             }
         }
 
-        /// <summary>
-        /// Returns great circle distance in meters. assuming a spherical earth.
-        /// Uses Haversine formula.
-        /// </summary>
-        /// <param name="lat1">Start latitude in deg.</param>
-        /// <param name="lon1">Start longitude in deg.</param>
-        /// <param name="lat2">End latitude in deg.</param>
-        /// <param name="lon2">End longitude in deg.</param>
-        /// <returns></returns>
-        public static double greatCircleDistance(double lat1, double lon1,
-            double lat2, double lon2) {
-            double slon, slat, a, c, d;
-
-            // Convert to radians
-            lat1 *= DEG2RAD;
-            lon1 *= DEG2RAD;
-            lat2 *= DEG2RAD;
-            lon2 *= DEG2RAD;
-
-            // Haversine formula
-            slon = Math.Sin((lon2 - lon1) / 2.0);
-            slat = Math.Sin((lat2 - lat1) / 2.0);
-            a = slat * slat + Math.Cos(lat1) * Math.Cos(lat2) * slon * slon;
-            c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-            d = REARTH / M2MI * c;
-
-            return (d);
-        }
-
-        /// <summary>
+         /// <summary>
         /// Reads lines from a file and adds them to the current lines.
         /// </summary>
         /// <param name="fileName"></param>
@@ -370,6 +301,77 @@ namespace MapLines {
                     + " " + line + NL;
             }
             return info;
+        }
+    }
+
+    public class Gps {
+                // GPS Constants
+
+        /// <summary>
+        /// Nominal radius of the earth in miles. The radius actually varies from
+        ///  3937 to 3976 mi.
+        /// </summary>
+        public const double REARTH = 3956;
+        /// <summary>
+        /// Multiplier to convert miles to nautical miles.
+        /// </summary>
+        public const double MI2NMI = 1.852; // Exact
+        /// <summary>
+        /// Multiplier to convert degrees to radians.
+        /// </summary>
+        public const double DEG2RAD = Math.PI / 180.0;
+        /// <summary>
+        /// Multiplier to convert feet to miles.
+        /// </summary>
+        public const double FT2MI = 1.0 / 5280.0;
+        /// <summary>
+        /// Multiplier to convert meters to miles.
+        /// </summary>
+        public const double M2MI = .00062137119224;
+        /// <summary>
+        /// Multiplier to convert kilometers to miles.
+        /// </summary>
+        public const double KM2MI = .001 * M2MI;
+        /// <summary>
+        /// Multiplier to convert meters to feet.
+        /// </summary>
+        public const double M2FT = 3.280839895;
+        /// <summary>
+        /// Multiplier to convert sec to hours.
+        /// </summary>
+        public const double SEC2HR = 1.0 / 3600.0;
+        /// <summary>
+        /// Multiplier to convert millisec to hours.
+        /// </summary>
+        public const double MS2HR = .001 * SEC2HR;
+
+        /// <summary>
+        /// Returns great circle distance in meters. assuming a spherical earth.
+        /// Uses Haversine formula.
+        /// </summary>
+        /// <param name="lat1">Start latitude in deg.</param>
+        /// <param name="lon1">Start longitude in deg.</param>
+        /// <param name="lat2">End latitude in deg.</param>
+        /// <param name="lon2">End longitude in deg.</param>
+        /// <returns></returns>
+        public static double greatCircleDistance(double lat1, double lon1,
+            double lat2, double lon2) {
+            double slon, slat, a, c, d;
+
+            // Convert to radians
+            lat1 *= DEG2RAD;
+            lon1 *= DEG2RAD;
+            lat2 *= DEG2RAD;
+            lon2 *= DEG2RAD;
+
+            // Haversine formula
+            slon = Math.Sin((lon2 - lon1) / 2.0);
+            slat = Math.Sin((lat2 - lat1) / 2.0);
+            a = slat * slat + Math.Cos(lat1) * Math.Cos(lat2) * slon * slon;
+            c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            d = REARTH / M2MI * c;
+
+            return (d);
         }
     }
 }

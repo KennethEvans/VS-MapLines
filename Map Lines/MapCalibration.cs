@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.RegularExpressions;
 
@@ -14,6 +15,7 @@ namespace MapLines {
         public static readonly String NL = Environment.NewLine;
         public List<MapData> DataList { get; set; } = new List<MapData>();
         public MapTransform Transform { get; set; }
+        public double Det { get; set; }
 
         public bool read(string fileName) {
             MapData data = null;
@@ -140,7 +142,7 @@ namespace MapLines {
         /// <param name="lat"></param>
         /// <returns></returns>
         public Point inverse(double lon, double lat) {
-            double det = Transform.A * Transform.D - Transform.B * Transform.C;
+            double det = Transform.Determinant;
             double v1, v2;
             lon -= Transform.E;
             lat -= Transform.F;
@@ -181,6 +183,7 @@ namespace MapLines {
             public double D { get; set; }
             public double E { get; set; }
             public double F { get; set; }
+            public double Determinant { get; set; }
 
             public MapTransform(double a, double b, double c, double d, double e, double f) {
                 A = a;
@@ -189,6 +192,7 @@ namespace MapLines {
                 D = d;
                 E = e;
                 F = f;
+                Determinant = A * D - B * C;
             }
         }
 
