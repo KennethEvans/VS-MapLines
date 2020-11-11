@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Map_Lines.Properties {
+namespace MapLines.Properties {
 
 
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
