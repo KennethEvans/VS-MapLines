@@ -24,6 +24,7 @@
         /// </summary>
         private void InitializeComponent() {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.tableLayoutPanelTop = new System.Windows.Forms.TableLayoutPanel();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -38,9 +39,9 @@
             this.linesFromGPXToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.saveLinesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveGPXToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveLinesAsPNGToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveLinesWithImageAsPNGToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveGPXToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panelImage = new System.Windows.Forms.Panel();
@@ -86,7 +87,6 @@
             // 
             // menuStrip
             // 
-            this.menuStrip.GripMargin = new System.Windows.Forms.Padding(2, 2, 0, 2);
             this.menuStrip.ImageScalingSize = new System.Drawing.Size(40, 40);
             this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
@@ -94,7 +94,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
-            this.menuStrip.Size = new System.Drawing.Size(1885, 52);
+            this.menuStrip.Size = new System.Drawing.Size(1885, 49);
             this.menuStrip.TabIndex = 1;
             this.menuStrip.Text = "menuStrip1";
             // 
@@ -148,7 +148,7 @@
             this.saveLinesAsPNGToolStripMenuItem,
             this.saveLinesWithImageAsPNGToolStripMenuItem});
             this.linesToolStripMenuItem.Name = "linesToolStripMenuItem";
-            this.linesToolStripMenuItem.Size = new System.Drawing.Size(109, 48);
+            this.linesToolStripMenuItem.Size = new System.Drawing.Size(109, 45);
             this.linesToolStripMenuItem.Text = "Lines";
             // 
             // editLinesToolStripMenuItem
@@ -189,6 +189,13 @@
             this.saveLinesToolStripMenuItem.Text = "Save Lines...";
             this.saveLinesToolStripMenuItem.Click += new System.EventHandler(this.OnSaveLinesClick);
             // 
+            // saveGPXToolStripMenuItem
+            // 
+            this.saveGPXToolStripMenuItem.Name = "saveGPXToolStripMenuItem";
+            this.saveGPXToolStripMenuItem.Size = new System.Drawing.Size(600, 54);
+            this.saveGPXToolStripMenuItem.Text = "Save Lines as GPX...";
+            this.saveGPXToolStripMenuItem.Click += new System.EventHandler(this.OnSaveGpxClick);
+            // 
             // saveLinesAsPNGToolStripMenuItem
             // 
             this.saveLinesAsPNGToolStripMenuItem.Name = "saveLinesAsPNGToolStripMenuItem";
@@ -202,13 +209,6 @@
             this.saveLinesWithImageAsPNGToolStripMenuItem.Size = new System.Drawing.Size(600, 54);
             this.saveLinesWithImageAsPNGToolStripMenuItem.Text = "Save Lines with Image as PNG...";
             this.saveLinesWithImageAsPNGToolStripMenuItem.Click += new System.EventHandler(this.OnSaveLinesPngImageClick);
-            // 
-            // saveGPXToolStripMenuItem
-            // 
-            this.saveGPXToolStripMenuItem.Name = "saveGPXToolStripMenuItem";
-            this.saveGPXToolStripMenuItem.Size = new System.Drawing.Size(600, 54);
-            this.saveGPXToolStripMenuItem.Text = "Save Lines as GPX...";
-            this.saveGPXToolStripMenuItem.Click += new System.EventHandler(this.OnSaveGpxClick);
             // 
             // helpToolStripMenuItem
             // 
@@ -230,9 +230,9 @@
             this.panelImage.AutoScroll = true;
             this.panelImage.Controls.Add(this.pictureBox);
             this.panelImage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelImage.Location = new System.Drawing.Point(3, 55);
+            this.panelImage.Location = new System.Drawing.Point(3, 52);
             this.panelImage.Name = "panelImage";
-            this.panelImage.Size = new System.Drawing.Size(1879, 1456);
+            this.panelImage.Size = new System.Drawing.Size(1879, 1459);
             this.panelImage.TabIndex = 2;
             // 
             // pictureBox
@@ -241,7 +241,7 @@
             this.pictureBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox.Location = new System.Drawing.Point(0, 0);
             this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(1879, 1456);
+            this.pictureBox.Size = new System.Drawing.Size(1879, 1459);
             this.pictureBox.TabIndex = 0;
             this.pictureBox.TabStop = false;
             this.pictureBox.Paint += new System.Windows.Forms.PaintEventHandler(this.OnPictureBoxPaint);
@@ -370,6 +370,7 @@
             this.ClientSize = new System.Drawing.Size(1885, 1514);
             this.ContextMenuStrip = this.contextMenuStrip;
             this.Controls.Add(this.tableLayoutPanelTop);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip;
             this.Name = "MainForm";
             this.Text = "Map Lines";

@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{054B0139-2A2C-4DAF-BCE8-084425E1E67E}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>Map_Lines</RootNamespace>
+    <RootNamespace>MapLines</RootNamespace>
     <AssemblyName>Map Lines</AssemblyName>
     <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -36,6 +36,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>App.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Map Lines.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MathNet.Numerics, Version=4.12.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -96,6 +99,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="InputDialog.resx">
       <DependentUpon>InputDialog.cs</DependentUpon>
@@ -115,6 +119,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Map Lines.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
