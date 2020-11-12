@@ -11,10 +11,11 @@ namespace KEUtils.InputDialog {
         }
 
         public InputDialog(string title, string prompt, string value) {
+            InitializeComponent();
+
             if (title != null) Title = title;
             if (prompt != null) Prompt = prompt;
             if (value != null) Value = value;
-            InitializeComponent();
         }
 
         public string Title {

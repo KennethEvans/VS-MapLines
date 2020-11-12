@@ -15,7 +15,7 @@ namespace MapLines {
         public static readonly float MOUSE_WHEEL_ZOOM_FACTOR = 0.001F;
         public static readonly float KEY_ZOOM_FACTOR = 1.1F;
         public static readonly float ZOOM_MIN = 0.1F;
-        public static readonly float LINE_WIDTH = 1;
+        public static readonly float LINE_WIDTH = 2;
 
         public Image Image { get; set; }
         public Image LinesImage { get; set; }
