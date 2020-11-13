@@ -1,4 +1,5 @@
 ﻿using KEUtils.About;
+using KEUtils.ScrolledHTML;
 using KEUtils.Utils;
 using System;
 using System.Diagnostics;
@@ -14,20 +15,66 @@ namespace MapLines {
         public static readonly String NL = Environment.NewLine;
         public static readonly float MOUSE_WHEEL_ZOOM_FACTOR = 0.001F;
         public static readonly float KEY_ZOOM_FACTOR = 1.1F;
-        public static readonly float ZOOM_MIN = 0.1F;
         public static readonly float LINE_WIDTH = 2;
 
-        public Image Image { get; set; }
-        public Image LinesImage { get; set; }
-        public bool Panning { get; set; }
-        public bool KeyPanning { get; set; }
-        public Point PanStart { get; set; }
-        float ZoomFactor { get; set; }
-        public RectangleF ViewRectangle { get; set; }
+        private static ScrolledHTMLDialog overviewDlg;
 
+        /// <summary>
+        /// The loaded image.
+        /// </summary>
+        public Image Image { get; set; }
+
+        /// <summary>
+        /// A Bitmap the same size as the main Image that holds the lines.
+        /// </summary>
+        public Image LinesImage { get; set; }
+ 
+        /// <summary>
+        /// Flag to indicating the mouse should pan.
+        /// </summary>
+        public bool Panning { get; set; }
+
+        /// <summary>
+        /// Flag to indicate panning with the key down is happening.
+        /// </summary>
+        public bool KeyPanning { get; set; }
+ 
+        /// <summary>
+        /// Location where mouse panning starts.
+        /// </summary>
+        public Point PanStart { get; set; }
+ 
+        /// <summary>
+        /// Indicates how much the Image is zoomed. Larger values correspond
+        /// to zoomed in.
+        /// </summary>
+        float ZoomFactor { get; set; }
+   
+        /// <summary>
+        ///  The RectangleF that denotes what part of the image is currently seen.
+        /// </summary>
+        public RectangleF ViewRectangle { get; set; }
+   
+        /// <summary>
+        /// Holds the currentl lines.
+        /// </summary>
         public Lines Lines { get; set; } = new Lines();
+    
+        /// <summary>
+        /// Holds the current line while drawing. Whether it is null or not
+        /// is a flag for when drawing is happening.
+        /// </summary>
         public Line CurLine { get; set; }
+    
+        /// <summary>
+        /// Used for numbering lines.
+        /// </summary>
         public int NextLineNumber { get; set; }
+    
+        /// <summary>
+        /// Holds the current calibration information. Is null if there is no
+        /// calibration file loaded.
+        /// </summary>
         public MapCalibration MapCalibration { get; set; }
 
         public MainForm() {
@@ -40,6 +87,9 @@ namespace MapLines {
 
         #region Image Manipulation
 
+        /// <summary>
+        /// Sets the ViewRectangle and calls Invalidate on the PictureBox.
+        /// </summary>
         private void zoomImage() {
             Size clientSize = pictureBox.ClientSize;
             float newWidth = clientSize.Width * ZoomFactor;
@@ -51,6 +101,9 @@ namespace MapLines {
             pictureBox.Invalidate();
         }
 
+        /// <summary>
+        /// Sets the ViewRectangle to fit the Image in the PictureBox.
+        /// </summary>
         private void resetViewToFit() {
             if (Image == null || Image.Width <= 0 || Image.Height <= 0) {
                 return;
@@ -76,6 +129,12 @@ namespace MapLines {
             resetImage(null, false);
         }
 
+        /// <summary>
+        /// Sets the initial, unzoomed, origin at top left ViewRectangle. Uses
+        /// the Current Image or loads a new one depending on replace.
+        /// </summary>
+        /// <param name="fileName">Name of an image file.</param>
+        /// <param name="replace">Whether to laod a new Image ffrom the fileName.</param>
         private void resetImage(string fileName, bool replace) {
             if (replace) {
                 if (Image != null) Image.Dispose();
@@ -89,6 +148,11 @@ namespace MapLines {
             pictureBox.Invalidate();
         }
 
+        /// <summary>
+        /// Converts a PictureBox point to an Image Point.
+        /// </summary>
+        /// <param name="pictureBoxPoint"></param>
+        /// <returns>The Image Point.</returns>
         private Point imagePoint(Point pictureBoxPoint) {
             Debug.WriteLine("imagePoint: in=" + pictureBoxPoint
                 + " ZoomFactor=" + ZoomFactor + NL
@@ -102,9 +166,9 @@ namespace MapLines {
         #endregion
 
         #region Lines
-        /**
-         * Starts a new line.
-         */
+        /// <summary>
+        /// Starts a new line.
+        /// </summary>
         public void startLine() {
             if (Lines == null || LinesImage == null) {
                 return;
@@ -113,41 +177,20 @@ namespace MapLines {
             CurLine = line;
             line.Desc = "Line " + NextLineNumber++;
             Lines.addLine(line);
-            // // Prompt for the description
-            // InputDialog dlg = new InputDialog(null, "Description",
-            // "Enter a description:", "Line " + NextLineNumber, null);
-            // dlg.setBlockOnOpen(true);
-            // int res = dlg.open();
-            // if(res == Dialog.OK) {
-            // String val = dlg.getValue();
-            // if(val != null) {
-            // line.setDesc(val);
-            // NextLineNumber++;
-            // }
-            // }
-
-            // // DEBUG
-            // System.out.println("startLine");
-            // System.out.println("curLine=" + CurLine);
-            // System.out.println(Lines.info());
         }
 
-        /**
-         * Clears the Lines.
-         */
+        /// <summary>
+        /// Clears the Lines.
+        /// </summary>
         public void clearLines() {
             endLine();
             Lines.clear();
             redrawLines();
-            // // DEBUG
-            // System.out.println("endLine");
-            // System.out.println("curLine=" + CurLine);
-            // System.out.println(Lines.info());
         }
 
-        /**
-         * Makes Lines corresponding to the calibration points.
-         */
+        /// <summary>
+        /// Makes Lines corresponding to the calibration points.
+        /// </summary>
         public void calibrationLines() {
             if (Lines == null || LinesImage == null) {
                 return;
@@ -160,9 +203,10 @@ namespace MapLines {
                 Utils.errMsg("Calibration is not valid");
                 return;
             }
+            // End any currently started line
+            endLine();
             Line line = new Line();
             Lines.addLine(line);
-            CurLine = line;
             foreach (MapData data in MapCalibration.DataList) {
                 line.addPoint(new Point(data.X, data.Y));
             }
@@ -171,26 +215,13 @@ namespace MapLines {
                 MapData data = MapCalibration.DataList[0];
                 line.addPoint(new Point(data.X, data.Y));
             }
-#if false
-// Prompt for the description
-            InputDialog dlg = new InputDialog("Description", "Enter a description:");
-            DialogResult res = dlg.ShowDialog();
-            if (res == DialogResult.OK) {
-                string val = dlg.Value;
-                if (val != null) {
-                    line.Desc = val;
-                    NextLineNumber++;
-                }
-            }
-#else
             line.Desc = "Calibration Lines";
-#endif
             redrawLines();
         }
 
-        /**
-         * Deletes the current line.
-         */
+        /// <summary>
+        /// Deletes the current line.
+        /// </summary>
         public void deleteLastPoint() {
             if (LinesImage == null) {
                 return;
@@ -201,15 +232,11 @@ namespace MapLines {
             }
             CurLine.deleteLastPoint();
             redrawLines();
-            // // DEBUG
-            // System.out.println("endLine");
-            // System.out.println("curLine=" + viewer.getCurLine());
-            // System.out.println(Lines.info());
         }
 
-        /**
-         * Ends a line line.
-         */
+        /// <summary>
+        /// Ends a line.
+        /// </summary>
         public void endLine() {
             if (LinesImage == null) {
                 return;
@@ -221,6 +248,9 @@ namespace MapLines {
             // System.out.println(Lines.info());
         }
 
+        /// <summary>
+        /// Redraws the lines on the Bitmap and calls Invalidate on the PictureBox.
+        /// </summary>
         public void redrawLines() {
             if (Lines == null) return;
             if (LinesImage == null) return;
@@ -311,6 +341,52 @@ namespace MapLines {
                 pictureBox.Cursor = Cursors.Default;
             }
             KeyPanning = false;
+        }
+
+        private void OnPictureBoxMouseDown(object sender, MouseEventArgs e) {
+            if (Panning) PanStart = e.Location;
+            else if (CurLine != null && e.Button == MouseButtons.Left) {
+                CurLine.addPoint(imagePoint(new Point(e.X, e.Y)));
+                redrawLines();
+            }
+        }
+
+        private void OnPictureBoxMouseMove(object sender, MouseEventArgs e) {
+            if (Panning) {
+                if (e.Button == MouseButtons.Left) {
+                    float deltaX = PanStart.X - e.X;
+                    float deltaY = PanStart.Y - e.Y;
+                    // Reset PanStart
+                    PanStart = e.Location;
+                    ViewRectangle = new RectangleF(ViewRectangle.X + deltaX,
+                        ViewRectangle.Y + deltaY,
+                        ViewRectangle.Width, ViewRectangle.Height);
+                    Debug.WriteLine("OnPictureBoxMouseMove:"
+                        + NL + " e=(" + e.X + "," + e.Y + ")"
+                        + NL + " PanStart=(" + PanStart.X + "," + PanStart.Y + ")"
+                        + NL + " delta=(" + deltaX + "," + deltaY + ")"
+                        + NL + "    ViewRectangle=" + ViewRectangle);
+                    pictureBox.Invalidate();
+                }
+            }
+        }
+
+        private void OnPictureBoxMouseWheel(object sender, MouseEventArgs e) {
+            Debug.WriteLine("OnPictureBoxMouseWheel: ZoomFactor=" + ZoomFactor);
+            ZoomFactor *= 1 + e.Delta * MOUSE_WHEEL_ZOOM_FACTOR;
+            zoomImage();
+        }
+
+        private void OnPictureBoxPaint(object sender, PaintEventArgs e) {
+            if (Image == null) return;
+            Graphics g = e.Graphics;
+            g.Clear(pictureBox.BackColor);
+            g.DrawImage(Image, pictureBox.ClientRectangle, ViewRectangle,
+                GraphicsUnit.Pixel);
+            if (LinesImage != null) {
+                g.DrawImage(LinesImage, pictureBox.ClientRectangle, ViewRectangle,
+                    GraphicsUnit.Pixel);
+            }
         }
 
         private void OnOpenImageClick(object sender, EventArgs e) {
@@ -448,6 +524,17 @@ namespace MapLines {
             }
         }
 
+        private void OnSaveCsvClick(object sender, EventArgs e) {
+            if (Lines == null) return;
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.Filter = "CSV|*.csv";
+            dlg.Title = "Select CSV file to write";
+            dlg.CheckFileExists = false;
+            if (dlg.ShowDialog() == DialogResult.OK) {
+                Lines.saveLinesCsv(dlg.FileName);
+            }
+        }
+
         private void OnSaveLinesPngClick(object sender, EventArgs e) {
             if (LinesImage == null) {
                 Utils.errMsg("There is no lines image");
@@ -557,49 +644,17 @@ namespace MapLines {
             resetImage();
         }
 
-        private void OnPictureBoxMouseDown(object sender, MouseEventArgs e) {
-            if (Panning) PanStart = e.Location;
-            else if (CurLine != null && e.Button == MouseButtons.Left) {
-                CurLine.addPoint(imagePoint(new Point(e.X, e.Y)));
-                redrawLines();
-            }
-        }
 
-        private void OnPictureBoxMouseMove(object sender, MouseEventArgs e) {
-            if (Panning) {
-                if (e.Button == MouseButtons.Left) {
-                    float deltaX = PanStart.X - e.X;
-                    float deltaY = PanStart.Y - e.Y;
-                    // Reset PanStart
-                    PanStart = e.Location;
-                    ViewRectangle = new RectangleF(ViewRectangle.X + deltaX,
-                        ViewRectangle.Y + deltaY,
-                        ViewRectangle.Width, ViewRectangle.Height);
-                    Debug.WriteLine("OnPictureBoxMouseMove:"
-                        + NL + " e=(" + e.X + "," + e.Y + ")"
-                        + NL + " PanStart=(" + PanStart.X + "," + PanStart.Y + ")"
-                        + NL + " delta=(" + deltaX + "," + deltaY + ")"
-                        + NL + "    ViewRectangle=" + ViewRectangle);
-                    pictureBox.Invalidate();
-                }
-            }
-        }
-
-        private void OnPictureBoxMouseWheel(object sender, MouseEventArgs e) {
-            Debug.WriteLine("OnPictureBoxMouseWheel: ZoomFactor=" + ZoomFactor);
-            ZoomFactor *= 1 + e.Delta * MOUSE_WHEEL_ZOOM_FACTOR;
-            zoomImage();
-        }
-
-        private void OnPictureBoxPaint(object sender, PaintEventArgs e) {
-            if (Image == null) return;
-            Graphics g = e.Graphics;
-            g.Clear(pictureBox.BackColor);
-            g.DrawImage(Image, pictureBox.ClientRectangle, ViewRectangle,
-                GraphicsUnit.Pixel);
-            if (LinesImage != null) {
-                g.DrawImage(LinesImage, pictureBox.ClientRectangle, ViewRectangle,
-                    GraphicsUnit.Pixel);
+        private void OnHelpOverviewClick(object sender, EventArgs e) {
+            // Create, show, or set visible the overview dialog as appropriate
+            if (overviewDlg == null) {
+                MainForm app = (MainForm)FindForm().FindForm();
+                overviewDlg = new ScrolledHTMLDialog(
+                    Utils.getDpiAdjustedSize(app, new Size(800, 600)),
+                    "Overview", @"Help\Overview.html");
+                overviewDlg.Show();
+            } else {
+                overviewDlg.Visible = true;
             }
         }
 

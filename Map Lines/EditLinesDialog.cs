@@ -121,13 +121,14 @@ namespace MapLines {
         }
 
         private void onColorClick(object sender, System.EventArgs e) {
+            if (listBox.SelectedItems.Count == 0) return;
+            ColorDialog dlg = new ColorDialog();
+            DialogResult res = dlg.ShowDialog();
+            if (res != DialogResult.OK) return;
+            Color color = dlg.Color;
             try {
                 foreach (Line line in listBox.SelectedItems) {
-                    ColorDialog dlg = new ColorDialog();
-                    DialogResult res = dlg.ShowDialog();
-                    if (res == DialogResult.OK) {
-                        line.Color = dlg.Color;
-                    }
+                        line.Color = color;
                 }
                 populateList();
                 MainForm.redrawLines();

@@ -61,6 +61,8 @@
             this.clearLinesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             this.calibrationLinesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.overviewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveLinesAsCSVToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tableLayoutPanelTop.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.panelImage.SuspendLayout();
@@ -87,6 +89,7 @@
             // 
             // menuStrip
             // 
+            this.menuStrip.GripMargin = new System.Windows.Forms.Padding(2, 2, 0, 2);
             this.menuStrip.ImageScalingSize = new System.Drawing.Size(40, 40);
             this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
@@ -94,7 +97,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
-            this.menuStrip.Size = new System.Drawing.Size(1885, 49);
+            this.menuStrip.Size = new System.Drawing.Size(1885, 52);
             this.menuStrip.TabIndex = 1;
             this.menuStrip.Text = "menuStrip1";
             // 
@@ -106,7 +109,7 @@
             this.toolStripSeparator3,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(87, 45);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(87, 48);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // openImageToolStripMenuItem
@@ -144,11 +147,12 @@
             this.linesFromGPXToolStripMenuItem,
             this.toolStripSeparator6,
             this.saveLinesToolStripMenuItem,
+            this.saveLinesAsCSVToolStripMenuItem,
             this.saveGPXToolStripMenuItem,
             this.saveLinesAsPNGToolStripMenuItem,
             this.saveLinesWithImageAsPNGToolStripMenuItem});
             this.linesToolStripMenuItem.Name = "linesToolStripMenuItem";
-            this.linesToolStripMenuItem.Size = new System.Drawing.Size(109, 45);
+            this.linesToolStripMenuItem.Size = new System.Drawing.Size(109, 48);
             this.linesToolStripMenuItem.Text = "Lines";
             // 
             // editLinesToolStripMenuItem
@@ -213,15 +217,16 @@
             // helpToolStripMenuItem
             // 
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.overviewToolStripMenuItem,
             this.aboutToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(104, 45);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(104, 48);
             this.helpToolStripMenuItem.Text = "Help";
             // 
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(266, 54);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(448, 54);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.OnHelpAboutClick);
             // 
@@ -230,9 +235,9 @@
             this.panelImage.AutoScroll = true;
             this.panelImage.Controls.Add(this.pictureBox);
             this.panelImage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelImage.Location = new System.Drawing.Point(3, 52);
+            this.panelImage.Location = new System.Drawing.Point(3, 55);
             this.panelImage.Name = "panelImage";
-            this.panelImage.Size = new System.Drawing.Size(1879, 1459);
+            this.panelImage.Size = new System.Drawing.Size(1879, 1456);
             this.panelImage.TabIndex = 2;
             // 
             // pictureBox
@@ -241,7 +246,7 @@
             this.pictureBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox.Location = new System.Drawing.Point(0, 0);
             this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(1879, 1459);
+            this.pictureBox.Size = new System.Drawing.Size(1879, 1456);
             this.pictureBox.TabIndex = 0;
             this.pictureBox.TabStop = false;
             this.pictureBox.Paint += new System.Windows.Forms.PaintEventHandler(this.OnPictureBoxPaint);
@@ -363,6 +368,20 @@
             this.calibrationLinesToolStripMenuItem.Text = "Calibration Lines";
             this.calibrationLinesToolStripMenuItem.Click += new System.EventHandler(this.OnCalibrationLinesClick);
             // 
+            // overviewToolStripMenuItem
+            // 
+            this.overviewToolStripMenuItem.Name = "overviewToolStripMenuItem";
+            this.overviewToolStripMenuItem.Size = new System.Drawing.Size(448, 54);
+            this.overviewToolStripMenuItem.Text = "Overview";
+            this.overviewToolStripMenuItem.Click += new System.EventHandler(this.OnHelpOverviewClick);
+            // 
+            // saveLinesAsCSVToolStripMenuItem
+            // 
+            this.saveLinesAsCSVToolStripMenuItem.Name = "saveLinesAsCSVToolStripMenuItem";
+            this.saveLinesAsCSVToolStripMenuItem.Size = new System.Drawing.Size(600, 54);
+            this.saveLinesAsCSVToolStripMenuItem.Text = "Save Lines as CSV";
+            this.saveLinesAsCSVToolStripMenuItem.Click += new System.EventHandler(this.OnSaveCsvClick);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(16F, 31F);
@@ -428,6 +447,8 @@
         private System.Windows.Forms.ToolStripMenuItem saveLinesAsPNGToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveLinesWithImageAsPNGToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveGPXToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem overviewToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveLinesAsCSVToolStripMenuItem;
     }
 }
 

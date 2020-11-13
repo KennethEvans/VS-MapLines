@@ -112,6 +112,30 @@ namespace MapLines {
             }
         }
 
+        /// <summary>
+        /// Saves the lines to a CSV file. Same as saveLines without the tags
+        /// and using a comma rather than a space as separator.
+        /// </summary>
+        /// <param name="fileName"></param>
+        public void saveLinesCsv(string fileName) {
+            if (LinesList == null) return;
+            Point point;
+            try {
+                using (StreamWriter outputFile = File.CreateText(fileName)) {
+                    foreach (Line line in LinesList) {
+                        outputFile.WriteLine(line.Desc);
+                         for (int j = 0; j < line.NPoints; j++) {
+                            point = line.Points[j];
+                            outputFile.WriteLine(point.X + "," + point.Y);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                Utils.excMsg("Error writing" + fileName, ex);
+                return;
+            }
+        }
+
         public void writeGpxFile(String fileName, MapCalibration mapCalibration) {
             if (LinesList == null) return;
             Point point;
