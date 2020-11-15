@@ -4,6 +4,7 @@ using KEUtils.Utils;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
@@ -15,9 +16,17 @@ namespace MapLines {
         public static readonly String NL = Environment.NewLine;
         public static readonly float MOUSE_WHEEL_ZOOM_FACTOR = 0.001F;
         public static readonly float KEY_ZOOM_FACTOR = 1.1F;
+        public static readonly Color SELECT_COLOR = Color.FromArgb(62, 140, 236);
         public static readonly float LINE_WIDTH = 2;
+        public static readonly float HIT_TOLERANCE = 8;
+
+        public enum Mode { NORMAL, PAN, EDIT }
+        public Mode ActiveMode { get; set; } = Mode.NORMAL;
 
         private static ScrolledHTMLDialog overviewDlg;
+
+        public Line HitLine { get; set; }
+        public Point? HitPoint { get; set; }
 
         /// <summary>
         /// The loaded image.
@@ -28,49 +37,49 @@ namespace MapLines {
         /// A Bitmap the same size as the main Image that holds the lines.
         /// </summary>
         public Image LinesImage { get; set; }
- 
+
         /// <summary>
-        /// Flag to indicating the mouse should pan.
+        /// A Bitmap the same size as the main Image that holds the overlay.
         /// </summary>
-        public bool Panning { get; set; }
+        public Image OverlayImage { get; set; }
 
         /// <summary>
         /// Flag to indicate panning with the key down is happening.
         /// </summary>
         public bool KeyPanning { get; set; }
- 
+
         /// <summary>
         /// Location where mouse panning starts.
         /// </summary>
         public Point PanStart { get; set; }
- 
+
         /// <summary>
         /// Indicates how much the Image is zoomed. Larger values correspond
         /// to zoomed in.
         /// </summary>
         float ZoomFactor { get; set; }
-   
+
         /// <summary>
         ///  The RectangleF that denotes what part of the image is currently seen.
         /// </summary>
         public RectangleF ViewRectangle { get; set; }
-   
+
         /// <summary>
         /// Holds the currentl lines.
         /// </summary>
         public Lines Lines { get; set; } = new Lines();
-    
+
         /// <summary>
         /// Holds the current line while drawing. Whether it is null or not
         /// is a flag for when drawing is happening.
         /// </summary>
         public Line CurLine { get; set; }
-    
+
         /// <summary>
         /// Used for numbering lines.
         /// </summary>
         public int NextLineNumber { get; set; }
-    
+
         /// <summary>
         /// Holds the current calibration information. Is null if there is no
         /// calibration file loaded.
@@ -163,6 +172,67 @@ namespace MapLines {
                 + (float)pictureBoxPoint.Y * ZoomFactor);
             return new Point(x, y);
         }
+
+        /// <summary>
+        /// Determines if the given Point is near any of the lines in 
+        /// Lines.LinesList. Sets HitLine to the first found or null if 
+        /// none found.
+        /// </summary>
+        /// <param name="point">The input point in PictureBox coordinates.</param>
+        /// <returns>If found.</returns>
+        public bool hitTestLine(Point point) {
+            if (ActiveMode != Mode.EDIT) return false;
+            Point imgPoint = imagePoint(point);
+            bool res;
+            HitLine = null;
+            Debug.WriteLine("hitTestLine: ActiveMode=" + ActiveMode
+                + " ZoomFactor=" + ZoomFactor + NL
+                + "    point=" + point + " imgPoint=" + imgPoint + NL
+                + "    LINE_WIDTH=" + LINE_WIDTH + " HIT_TOLERANCE=" + HIT_TOLERANCE);
+            foreach (Line line in Lines.LinesList) {
+                using (var path = new GraphicsPath())
+                using (var pen = new Pen(Color.Black, HIT_TOLERANCE)) {
+                    for (int i = 1; i < line.NPoints; i++) {
+                        path.AddLine(line.Points[i - 1], line.Points[i]);
+                    }
+                    res = path.IsOutlineVisible(imgPoint, pen);
+                    if (res) {
+                        HitLine = line;
+                        return true;
+                    }
+                }
+            }
+            HitPoint = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if the given Point is near the points in HitLine.
+        /// Sets HitPoint to the first found or null if not found;
+        /// </summary>
+        /// <param name="point">The input point in PictureBox coordinates.</param>
+        /// <returns>If found.</returns>
+        public bool hitTestPoint(Point point) {
+            if (ActiveMode != Mode.EDIT) return false;
+            if (HitLine == null) return false;
+            Point imgPoint = imagePoint(point);
+            bool res;
+            HitPoint = null;
+            Debug.WriteLine("hitTestPoint: ActiveMode=" + ActiveMode
+               + " ZoomFactor=" + ZoomFactor + NL
+               + "    point=" + point + " imgPoint=" + imgPoint + NL
+               + "    LINE_WIDTH=" + LINE_WIDTH + " HIT_TOLERANCE=" + HIT_TOLERANCE);
+            Region region;
+            foreach (Point point1 in HitLine.Points) {
+                region = new Region(centeredSquare(point1, HIT_TOLERANCE));
+                res = region.IsVisible(imgPoint);
+                if (res) {
+                    HitPoint = new Point?(point1);
+                    return true;
+                }
+            }
+            return false;
+        }
         #endregion
 
         #region Lines
@@ -254,19 +324,80 @@ namespace MapLines {
         public void redrawLines() {
             if (Lines == null) return;
             if (LinesImage == null) return;
-            Graphics g = Graphics.FromImage(LinesImage);
-            g.Clear(Color.Transparent);
-            Point[] points;
-            foreach (Line line in Lines.LinesList) {
-                using (Pen pen = new Pen(line.Color, LINE_WIDTH)) {
-                    if (line.Points == null || line.Points.Count < 2) continue;
-                    points = line.Points.ToArray();
-                    g.DrawLines(pen, points);
+            using (Graphics g = Graphics.FromImage(LinesImage)) {
+                g.Clear(Color.Transparent);
+                Point[] points;
+                foreach (Line line in Lines.LinesList) {
+                    using (Pen pen = new Pen(line.Color, LINE_WIDTH)) {
+                        if (line.Points == null || line.Points.Count < 2) continue;
+                        points = line.Points.ToArray();
+                        g.DrawLines(pen, points);
+                    }
                 }
             }
             pictureBox.Invalidate();
         }
 
+        /// <summary>
+        /// Redraws the OverlayImage and calls Invalidate on the PictureBox.
+        /// </summary>
+        public void redrawOverlay() {
+            Debug.WriteLine("redrawOverlay: EDIT:" + " HitLine="
+               + ((HitLine == null) ? "Null" : "\"" + HitLine.Desc + "\"")
+               + " HitPoint="
+               + ((HitPoint == null) ? "null" : "X=" + HitPoint.Value));
+            if (ActiveMode != Mode.EDIT) {
+                if (OverlayImage != null) {
+                    OverlayImage.Dispose();
+                    OverlayImage = null;
+                }
+                pictureBox.Invalidate();
+                return;
+            }
+            if (HitLine == null && HitPoint == null) {
+                if (OverlayImage != null) {
+                    OverlayImage.Dispose();
+                    OverlayImage = null;
+                }
+                pictureBox.Invalidate();
+                return;
+            }
+            OverlayImage = new Bitmap(Image.Width, Image.Height);
+            float size = HIT_TOLERANCE;
+            float size2 = HIT_TOLERANCE * 2;
+            using (var brush = new SolidBrush(SELECT_COLOR))
+            using (var bigPen = new Pen(SELECT_COLOR, size))
+            using (var littlePen = new Pen(SELECT_COLOR, LINE_WIDTH))
+            using (var littlePenBlack = new Pen(Color.Black, 2))
+            using (Graphics g = Graphics.FromImage(OverlayImage)) {
+                g.Clear(Color.Transparent);
+
+                if (HitLine != null) {
+                    // Draw new color over the lines
+                    Point[] points = HitLine.Points.ToArray();
+                    g.DrawLines(littlePen, points);
+                    foreach (Point point in HitLine.Points) {
+                        RectangleF rect = centeredSquare(point, size);
+                        g.FillEllipse(brush, rect);
+                    }
+                }
+                if (HitPoint != null) {
+                    Point point = (Point)HitPoint;
+                    RectangleF rect = centeredSquare(point, size2);
+                    g.DrawEllipse(littlePenBlack, rect);
+                }
+            }
+            pictureBox.Invalidate();
+        }
+
+        private RectangleF centeredSquare(PointF center, float width) {
+            return centeredRectangle(center, width, width);
+        }
+
+        private RectangleF centeredRectangle(PointF center, float width, float height) {
+            return new RectangleF(center.X - width / 2,
+                center.Y - height / 2, width, height);
+        }
         #endregion
 
         #region Event Handlers
@@ -289,8 +420,8 @@ namespace MapLines {
                     + imageFileName, ex);
                 return;
             }
-            try { 
-            // Load last calibration
+            try {
+                // Load last calibration
                 if (File.Exists(calibFileName)) {
                     MapCalibration = new MapCalibration();
                     MapCalibration.read(calibFileName);
@@ -314,10 +445,7 @@ namespace MapLines {
         private void OnKeyDown(object sender, KeyEventArgs e) {
             if (e.KeyCode == Keys.Space) {
                 KeyPanning = true;
-                if (!Panning) {
-                    Panning = true;
-                    pictureBox.Cursor = Cursors.Hand;
-                }
+                pictureBox.Cursor = Cursors.Hand;
             } else if (e.KeyCode == Keys.Oemplus) {
                 ZoomFactor /= KEY_ZOOM_FACTOR;
                 zoomImage();
@@ -336,26 +464,40 @@ namespace MapLines {
         }
 
         private void OnKeyUp(object sender, KeyEventArgs e) {
-            if (KeyPanning) {
-                Panning = false;
+            if (KeyPanning && ActiveMode != Mode.PAN) {
                 pictureBox.Cursor = Cursors.Default;
             }
             KeyPanning = false;
         }
 
         private void OnPictureBoxMouseDown(object sender, MouseEventArgs e) {
-            if (Panning) PanStart = e.Location;
-            else if (CurLine != null && e.Button == MouseButtons.Left) {
-                CurLine.addPoint(imagePoint(new Point(e.X, e.Y)));
-                redrawLines();
+            // Avoid context menu clicks
+            if (e.Button != MouseButtons.Left) return;
+            // Needed for KeyPanning as well as PAN
+            PanStart = e.Location;
+            if (ActiveMode == Mode.PAN) {
+                // Do nothing for now
+            } else if (ActiveMode == Mode.EDIT) {
+                if (!KeyPanning) {
+                    bool resLine = hitTestLine(e.Location);
+                    bool resPoint = hitTestPoint(e.Location);
+                    Debug.WriteLine("OnPictureBoxMouseDown: EDIT: resLine="
+                        + resLine + " resPoint=" + resPoint);
+                    redrawOverlay();
+                }
+            } else if (ActiveMode == Mode.NORMAL) {
+                if (CurLine != null && e.Button == MouseButtons.Left) {
+                    CurLine.addPoint(imagePoint(e.Location));
+                    redrawLines();
+                }
             }
         }
 
         private void OnPictureBoxMouseMove(object sender, MouseEventArgs e) {
-            if (Panning) {
+            if (ActiveMode == Mode.PAN || KeyPanning) {
                 if (e.Button == MouseButtons.Left) {
-                    float deltaX = PanStart.X - e.X;
-                    float deltaY = PanStart.Y - e.Y;
+                    float deltaX = (PanStart.X - e.X) * ZoomFactor;
+                    float deltaY = (PanStart.Y - e.Y) * ZoomFactor;
                     // Reset PanStart
                     PanStart = e.Location;
                     ViewRectangle = new RectangleF(ViewRectangle.X + deltaX,
@@ -372,12 +514,18 @@ namespace MapLines {
         }
 
         private void OnPictureBoxMouseWheel(object sender, MouseEventArgs e) {
-            Debug.WriteLine("OnPictureBoxMouseWheel: ZoomFactor=" + ZoomFactor);
+            //Debug.WriteLine("OnPictureBoxMouseWheel: ZoomFactor=" + ZoomFactor);
             ZoomFactor *= 1 + e.Delta * MOUSE_WHEEL_ZOOM_FACTOR;
             zoomImage();
         }
 
         private void OnPictureBoxPaint(object sender, PaintEventArgs e) {
+            Debug.WriteLine("OnPictureBoxPaint: Image="
+                + ((Image == null) ? "null" : Image.GetType().Name)
+                + " LinesImage="
+                + ((LinesImage == null) ? "null" : LinesImage.GetType().Name)
+                + " OverlayImage="
+                + ((OverlayImage == null) ? "null" : OverlayImage.GetType().Name));
             if (Image == null) return;
             Graphics g = e.Graphics;
             g.Clear(pictureBox.BackColor);
@@ -385,6 +533,11 @@ namespace MapLines {
                 GraphicsUnit.Pixel);
             if (LinesImage != null) {
                 g.DrawImage(LinesImage, pictureBox.ClientRectangle, ViewRectangle,
+                    GraphicsUnit.Pixel);
+            }
+            // Handle EDIT mode
+            if (ActiveMode == Mode.EDIT && OverlayImage != null) {
+                g.DrawImage(OverlayImage, pictureBox.ClientRectangle, ViewRectangle,
                     GraphicsUnit.Pixel);
             }
         }
@@ -631,13 +784,36 @@ namespace MapLines {
             zoomImage();
         }
 
+        private void OnContextMenuOpening(object sender, System.ComponentModel.CancelEventArgs e) {
+            panToolStripMenuItem.CheckState =
+                 (ActiveMode == Mode.PAN) ? CheckState.Checked : CheckState.Unchecked;
+            editToolStripMenuItem.CheckState =
+                (ActiveMode == Mode.EDIT) ? CheckState.Checked : CheckState.Unchecked;
+        }
+
+        private void OnEditClick(object sender, EventArgs e) {
+            if (ActiveMode != Mode.EDIT) {
+                ActiveMode = Mode.EDIT;
+            } else {
+                ActiveMode = Mode.NORMAL;
+                HitLine = null;
+                HitPoint = null;
+            }
+            pictureBox.Invalidate();
+            pictureBox.Cursor = Cursors.Default;
+        }
+
         private void OnPanClick(object sender, EventArgs e) {
-            Panning = !Panning;
-            if (Panning) {
+            if (ActiveMode != Mode.PAN) {
+                ActiveMode = Mode.PAN;
+                HitLine = null;
+                HitPoint = null;
                 pictureBox.Cursor = Cursors.Hand;
             } else {
+                ActiveMode = Mode.NORMAL;
                 pictureBox.Cursor = Cursors.Default;
             }
+            pictureBox.Invalidate();
         }
 
         private void OnResetClick(object sender, EventArgs e) {
