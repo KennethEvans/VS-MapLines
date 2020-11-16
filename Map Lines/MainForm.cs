@@ -18,7 +18,9 @@ namespace MapLines {
         public static readonly float KEY_ZOOM_FACTOR = 1.1F;
         public static readonly Color SELECT_COLOR = Color.FromArgb(62, 140, 236);
         public static readonly float LINE_WIDTH = 2;
-        public static readonly float HIT_TOLERANCE = 8;
+        public static readonly float HIT_TOLERANCE = 10;
+        public static readonly Point INVALID_POINT =
+            new Point(Int32.MinValue, Int32.MinValue);
 
         public enum Mode { NORMAL, PAN, EDIT }
         public Mode ActiveMode { get; set; } = Mode.NORMAL;
@@ -26,7 +28,7 @@ namespace MapLines {
         private static ScrolledHTMLDialog overviewDlg;
 
         public Line HitLine { get; set; }
-        public Point? HitPoint { get; set; }
+        public HitPoint HitPoint { get; set; }
 
         /// <summary>
         /// The loaded image.
@@ -227,7 +229,7 @@ namespace MapLines {
                 region = new Region(centeredSquare(point1, HIT_TOLERANCE));
                 res = region.IsVisible(imgPoint);
                 if (res) {
-                    HitPoint = new Point?(point1);
+                    HitPoint = new HitPoint(HitLine, HitLine.Points.IndexOf(point1));
                     return true;
                 }
             }
@@ -343,9 +345,9 @@ namespace MapLines {
         /// </summary>
         public void redrawOverlay() {
             Debug.WriteLine("redrawOverlay: EDIT:" + " HitLine="
-               + ((HitLine == null) ? "Null" : "\"" + HitLine.Desc + "\"")
+               + ((HitLine == null) ? "null" : "\"" + HitLine.Desc + "\"")
                + " HitPoint="
-               + ((HitPoint == null) ? "null" : "X=" + HitPoint.Value));
+               + ((HitPoint == null) ? "null" : "X=" + HitPoint.Point.X));
             if (ActiveMode != Mode.EDIT) {
                 if (OverlayImage != null) {
                     OverlayImage.Dispose();
@@ -364,9 +366,8 @@ namespace MapLines {
             }
             OverlayImage = new Bitmap(Image.Width, Image.Height);
             float size = HIT_TOLERANCE;
-            float size2 = HIT_TOLERANCE * 2;
+            float size2 = HIT_TOLERANCE * 1.5f;
             using (var brush = new SolidBrush(SELECT_COLOR))
-            using (var bigPen = new Pen(SELECT_COLOR, size))
             using (var littlePen = new Pen(SELECT_COLOR, LINE_WIDTH))
             using (var littlePenBlack = new Pen(Color.Black, 2))
             using (Graphics g = Graphics.FromImage(OverlayImage)) {
@@ -382,8 +383,7 @@ namespace MapLines {
                     }
                 }
                 if (HitPoint != null) {
-                    Point point = (Point)HitPoint;
-                    RectangleF rect = centeredSquare(point, size2);
+                    RectangleF rect = centeredSquare(HitPoint.Point, size2);
                     g.DrawEllipse(littlePenBlack, rect);
                 }
             }
@@ -494,7 +494,7 @@ namespace MapLines {
         }
 
         private void OnPictureBoxMouseMove(object sender, MouseEventArgs e) {
-            if (ActiveMode == Mode.PAN || KeyPanning) {
+            if (KeyPanning) {
                 if (e.Button == MouseButtons.Left) {
                     float deltaX = (PanStart.X - e.X) * ZoomFactor;
                     float deltaY = (PanStart.Y - e.Y) * ZoomFactor;
@@ -503,12 +503,26 @@ namespace MapLines {
                     ViewRectangle = new RectangleF(ViewRectangle.X + deltaX,
                         ViewRectangle.Y + deltaY,
                         ViewRectangle.Width, ViewRectangle.Height);
-                    Debug.WriteLine("OnPictureBoxMouseMove:"
-                        + NL + " e=(" + e.X + "," + e.Y + ")"
-                        + NL + " PanStart=(" + PanStart.X + "," + PanStart.Y + ")"
-                        + NL + " delta=(" + deltaX + "," + deltaY + ")"
-                        + NL + "    ViewRectangle=" + ViewRectangle);
                     pictureBox.Invalidate();
+                }
+            } else if (ActiveMode == Mode.PAN) {
+                // Same as for KeyPanning
+                if (e.Button == MouseButtons.Left) {
+                    float deltaX = (PanStart.X - e.X) * ZoomFactor;
+                    float deltaY = (PanStart.Y - e.Y) * ZoomFactor;
+                    // Reset PanStart
+                    PanStart = e.Location;
+                    ViewRectangle = new RectangleF(ViewRectangle.X + deltaX,
+                        ViewRectangle.Y + deltaY,
+                        ViewRectangle.Width, ViewRectangle.Height);
+                    pictureBox.Invalidate();
+                }
+            } else if (ActiveMode == Mode.EDIT) {
+                if (e.Button == MouseButtons.Left && HitPoint != null) {
+                    Point imgPoint = imagePoint(e.Location);
+                    HitPoint.Point = imgPoint;
+                    redrawLines();
+                    redrawOverlay();
                 }
             }
         }
@@ -875,6 +889,35 @@ namespace MapLines {
             EditLinesDialog dlg = new EditLinesDialog(this, Lines.LinesList);
             dlg.Show();
             Lines.LinesList = dlg.LinesList;
+        }
+    }
+
+    public class HitPoint {
+        public Point Point {
+            get {
+                Point point;
+                try {
+                    point = Line.Points[Index];
+                    return point;
+                } catch (Exception ex) {
+                    Utils.excMsg("HitPoint Error getting Point", ex);
+                    return MainForm.INVALID_POINT;
+                }
+            }
+            set {
+                try {
+                    Line.Points[Index] = value;
+                } catch (Exception ex) {
+                    Utils.excMsg("HitPoint Setting getting Point", ex);
+                }
+            }
+        }
+        public Line Line { get; set; }
+        public int Index { get; set; }
+
+        public HitPoint(Line line, int index) {
+            Line = line;
+            Index = index;
         }
     }
 }
