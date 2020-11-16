@@ -187,11 +187,25 @@ namespace MapLines {
             Point imgPoint = imagePoint(point);
             bool res;
             HitLine = null;
+            HitPoint = null;
             Debug.WriteLine("hitTestLine: ActiveMode=" + ActiveMode
                 + " ZoomFactor=" + ZoomFactor + NL
                 + "    point=" + point + " imgPoint=" + imgPoint + NL
                 + "    LINE_WIDTH=" + LINE_WIDTH + " HIT_TOLERANCE=" + HIT_TOLERANCE);
             foreach (Line line in Lines.LinesList) {
+                // First check the points
+                Region region;
+                foreach (Point point1 in line.Points) {
+                    region = new Region(centeredSquare(point1, HIT_TOLERANCE));
+                    res = region.IsVisible(imgPoint);
+                    if (res) {
+                        HitPoint = new HitPoint(line, line.Points.IndexOf(point1));
+                        HitLine = line;
+                        return true;
+                    }
+                }
+                // Then check the lines.
+                // Tolerance does not extend past the ends as it does transverse.
                 using (var path = new GraphicsPath())
                 using (var pen = new Pen(Color.Black, HIT_TOLERANCE)) {
                     for (int i = 1; i < line.NPoints; i++) {
@@ -204,37 +218,9 @@ namespace MapLines {
                     }
                 }
             }
-            HitPoint = null;
             return false;
         }
 
-        /// <summary>
-        /// Determines if the given Point is near the points in HitLine.
-        /// Sets HitPoint to the first found or null if not found;
-        /// </summary>
-        /// <param name="point">The input point in PictureBox coordinates.</param>
-        /// <returns>If found.</returns>
-        public bool hitTestPoint(Point point) {
-            if (ActiveMode != Mode.EDIT) return false;
-            if (HitLine == null) return false;
-            Point imgPoint = imagePoint(point);
-            bool res;
-            HitPoint = null;
-            Debug.WriteLine("hitTestPoint: ActiveMode=" + ActiveMode
-               + " ZoomFactor=" + ZoomFactor + NL
-               + "    point=" + point + " imgPoint=" + imgPoint + NL
-               + "    LINE_WIDTH=" + LINE_WIDTH + " HIT_TOLERANCE=" + HIT_TOLERANCE);
-            Region region;
-            foreach (Point point1 in HitLine.Points) {
-                region = new Region(centeredSquare(point1, HIT_TOLERANCE));
-                res = region.IsVisible(imgPoint);
-                if (res) {
-                    HitPoint = new HitPoint(HitLine, HitLine.Points.IndexOf(point1));
-                    return true;
-                }
-            }
-            return false;
-        }
         #endregion
 
         #region Lines
@@ -480,9 +466,8 @@ namespace MapLines {
             } else if (ActiveMode == Mode.EDIT) {
                 if (!KeyPanning) {
                     bool resLine = hitTestLine(e.Location);
-                    bool resPoint = hitTestPoint(e.Location);
                     Debug.WriteLine("OnPictureBoxMouseDown: EDIT: resLine="
-                        + resLine + " resPoint=" + resPoint);
+                        + resLine);
                     redrawOverlay();
                 }
             } else if (ActiveMode == Mode.NORMAL) {
