@@ -9,8 +9,8 @@
 <h1 align="center"><strong><img src="MapLines.256x256.png" alt="Logo" width="96" height="96" align="middle" />Map Lines Overview</strong></h1>
 <p>
 Map Lines  is a C# application that primarily allows you to digitalize points on images by drawing lines between them. It saves the pixel coordinates of points on the line in a file. It was originally designed to trace old railroad beds in Northern Wisconsin that had been drawn by hand on USGS geologic maps by James P. Kaysen with the purpose in mind to display these digitally in an application such as Google Maps. It can more generally be used to draw GPS tracks or other data on an image of a map, such as one with hiking trails.</p>
-<p>The digitizing capability in Map Lines does not require a coordinate system other than the x,y pixel coordinates of the image. However, it is necessary to convert the pixel coordinates to latitude and longitude coordinates in order to display GPS data if those are used. To do this a calibration file is needed. The calibration file must be created outside of Map Lines, typically in a text editor. See <a href="#calibration">Calibration Files</a> for more details. </p>
-<p>Map Lines can also be used to digitize graphs, that is, get the x,y pixel coordinates of the points of the lines in the graph..</p>
+<p>The digitizing capability in Map Lines does not require a coordinate system other than the x, y pixel coordinates of the image. However, it is necessary to convert the pixel coordinates to latitude and longitude coordinates in order to display GPS data if those are used. To do this a calibration file is needed. The calibration file must be created outside of Map Lines, typically in a text editor. See <a href="#calibration">Calibration Files</a> for more details. </p>
+<p>Map Lines can also be used to digitize graphs, that is, get the x, y pixel coordinates of the points of the lines in the graph..</p>
 <p>To use Map Lines you would typically load an image file and a calibration file (if GPS data is to be used). You can then draw lines or generate them from <a href="https://www.topografix.com/gpx.asp">GPX</a> files. You can start and end lines using the right-click <a href="#contextmenu">Context Menu</a>. You can save the lines as a Map Lines .lines file (one line for each point consisting of the x and y pixel values), a transparent PNG file consisting of only the lines, a PNG file of the original image including the lines, a GPX file, or a CSV file. The PNG files can be used in MapImage provided you have the corresponding calibration file. </p>
 <p>Note that most of the user interface elements, such as buttons, text entries, checkboxes, etc., have tool tips which should appear when you hold the cursor over them. This is the easiest way to get help on what these controls do. </p>
 <p><a href="#Acknowledgements">Acknowledgements</a> are at the end of the page. </p>
@@ -46,6 +46,8 @@ Map Lines  is a C# application that primarily allows you to digitalize points on
 <p>Spacebar : Cursor changes to a hand and you can pan the image by dragging. </p>
 <p>Ctrl+0: Centers the image.</p>
 <p>Ctrl+1: Resets the image to the starting position (not zoomed, top left corner at the top left). </p>
+<h2>Edit Mode</h2>
+<p>There are several ways to edit the lines you draw. There is the <a href="#EditLines">Edit Lines</a> dialog, where you can edit the properties of all the lines in one place. There is an item in the <a href="#contextmenu">Context Menu</a> to delete the last point in case you did not like it. And there is Edit mode, also in the <a href="#contextmenu">Context Menu</a>, where you can edit the points in the line. When Edit Mode is enabled, when you click on a line it becomes highlighted, and the end points are represented by circles. If you click on an end point, that endpoint is selected. You can move the endpoints points by dragging them.  If you Shift-click on a line it will add a point where you clicked. If you Alt-click an endpoint it will delete it.</p>
 <h2>Menus</h2>
 <h3>File Menu </h3>
 <h4>Open Image</h4>
@@ -55,7 +57,7 @@ Map Lines  is a C# application that primarily allows you to digitalize points on
 <h4>Exit</h4>
 <p>Quits Map Lines. </p>
 <h2>Lines Menu </h2>
-<h4>Edit Lines </h4>
+<h4><a name="EditLines" id="EditLines"></a>Edit Lines </h4>
 <p>Brings up a dialog where you can manage the existing lines, including deleting, renaming, changing the color, and moving them up and down in the order. Use this dialog to manage the lines you created if necessary.</p>
 <ul>
   <li>The dialog is modeless, meaning it can stay up while you continue to work.</li>

@@ -2,6 +2,7 @@
 using KEUtils.ScrolledHTML;
 using KEUtils.Utils;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -160,6 +161,16 @@ namespace MapLines {
         }
 
         /// <summary>
+        /// Clears editing information.
+        /// </summary>
+        private void cleanupEdit() {
+            HitLine = null;
+            HitPoint = null;
+            redrawOverlay();
+
+        }
+
+        /// <summary>
         /// Converts a PictureBox point to an Image Point.
         /// </summary>
         /// <param name="pictureBoxPoint"></param>
@@ -194,6 +205,7 @@ namespace MapLines {
                 + "    LINE_WIDTH=" + LINE_WIDTH + " HIT_TOLERANCE=" + HIT_TOLERANCE);
             foreach (Line line in Lines.LinesList) {
                 // First check the points
+                // (Tolerance does not extend past the ends as it does transverse.)
                 Region region;
                 foreach (Point point1 in line.Points) {
                     region = new Region(centeredSquare(point1, HIT_TOLERANCE));
@@ -205,7 +217,6 @@ namespace MapLines {
                     }
                 }
                 // Then check the lines.
-                // Tolerance does not extend past the ends as it does transverse.
                 using (var path = new GraphicsPath())
                 using (var pen = new Pen(Color.Black, HIT_TOLERANCE)) {
                     for (int i = 1; i < line.NPoints; i++) {
@@ -221,6 +232,79 @@ namespace MapLines {
             return false;
         }
 
+        /// <summary>
+        /// Adds a point to the HitLine after the point corresponding to the 
+        /// given Point and located between it and the next point at a distance 
+        /// depending on the ratio of the distances between those points and 
+        /// the diven point. If there is only one point in the line nothing will be done.
+        /// </summary>
+        /// <param name="point"></param>
+        public void addPoint(Point point) {
+            if (HitLine == null) return;
+            Point imgPoint = imagePoint(point);
+            List<Point> points = HitLine.Points;
+            int count = points.Count;
+            // Be sure there is more than one point
+            if (count <= 1) return;
+            Point lineStart = INVALID_POINT;
+            bool res;
+            // First check the points
+            // (Tolerance does not extend past the ends as it does transverse.)
+            Region region;
+            foreach (Point point1 in points) {
+                region = new Region(centeredSquare(point1, HIT_TOLERANCE));
+                res = region.IsVisible(imgPoint);
+                if (res) {
+                    lineStart = point1;
+                    break;
+                }
+            }
+            // Then check the lines.
+            if (lineStart == INVALID_POINT) {
+                for (int i = 1; i < HitLine.NPoints; i++) {
+                    using (var path = new GraphicsPath())
+                    using (var pen = new Pen(Color.Black, HIT_TOLERANCE)) {
+                        path.AddLine(points[i - 1], points[i]);
+                        res = path.IsOutlineVisible(imgPoint, pen);
+                        if (res) {
+                            lineStart = HitLine.Points[i - 1];
+                            break;
+                        }
+                    }
+                }
+            }
+            if (lineStart == INVALID_POINT) return;
+            int indexStart = points.IndexOf(lineStart);
+            if (indexStart == count - 1) indexStart--;
+            if (points.IndexOf(lineStart) == count - 1) {
+                lineStart = points[count - 2];
+            }
+            Point lineEnd = points[indexStart + 1];
+            double distance12 = lineLength(lineStart, lineEnd);
+            double distance01 = lineLength(lineStart, imgPoint);
+            double distance02 = lineLength(imgPoint, lineEnd);
+            double ratio;
+            if (distance01 == 0 && distance02 == 0) ratio = 0;
+            else ratio = distance01 / (distance01 + distance02);
+            int x2 = (int)Math.Round(lineStart.X + ratio * (lineEnd.X - lineStart.X));
+            int y2 = (int)Math.Round(lineStart.Y + ratio * (lineEnd.Y - lineStart.Y));
+            Point newPoint = new Point(x2, y2);
+            int newIndex = indexStart + 1;
+            points.Insert(indexStart + 1, newPoint);
+            HitPoint = new HitPoint(HitLine, newIndex);
+        }
+
+        /// <summary>
+        /// Calculates the distance between two Points.
+        /// </summary>
+        /// <param name="point0"></param>
+        /// <param name="point1"></param>
+        /// <returns></returns>
+        public double lineLength(Point point0, Point point1) {
+            double deltaX = point0.X - point1.X;
+            double deltaY = point0.Y - point1.Y;
+            return Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+        }
         #endregion
 
         #region Lines
@@ -243,7 +327,7 @@ namespace MapLines {
         public void clearLines() {
             endLine();
             Lines.clear();
-            redrawLines();
+            cleanupEdit();
         }
 
         /// <summary>
@@ -316,10 +400,23 @@ namespace MapLines {
                 g.Clear(Color.Transparent);
                 Point[] points;
                 foreach (Line line in Lines.LinesList) {
-                    using (Pen pen = new Pen(line.Color, LINE_WIDTH)) {
-                        if (line.Points == null || line.Points.Count < 2) continue;
-                        points = line.Points.ToArray();
-                        g.DrawLines(pen, points);
+                    if (line.NPoints == 0) continue;
+                    if (line.NPoints == 1) {
+                        // Draw a semi-transparent circle if there is only one point
+                        Point point = line.Points[0];
+                        float size = 2 * LINE_WIDTH;
+                        using (var brush = new SolidBrush(
+                            Color.FromArgb(0x80, line.Color))) {
+                            RectangleF rect = centeredSquare(point, size);
+                            g.FillEllipse(brush, rect);
+                        }
+                    } else {
+                        // Draw the lines
+                        using (Pen pen = new Pen(line.Color, LINE_WIDTH)) {
+                            if (line.Points == null || line.Points.Count < 2) continue;
+                            points = line.Points.ToArray();
+                            g.DrawLines(pen, points);
+                        }
                     }
                 }
             }
@@ -328,6 +425,8 @@ namespace MapLines {
 
         /// <summary>
         /// Redraws the OverlayImage and calls Invalidate on the PictureBox.
+        /// Removes the OverlayImage if not in EDIT mode or if there is no 
+        /// HitLine and no HitPoint.
         /// </summary>
         public void redrawOverlay() {
             Debug.WriteLine("redrawOverlay: EDIT:" + " HitLine="
@@ -461,15 +560,26 @@ namespace MapLines {
             if (e.Button != MouseButtons.Left) return;
             // Needed for KeyPanning as well as PAN
             PanStart = e.Location;
+            // Don't do mouse down operation while key panning
+            if (KeyPanning) return;
             if (ActiveMode == Mode.PAN) {
                 // Do nothing for now
             } else if (ActiveMode == Mode.EDIT) {
-                if (!KeyPanning) {
-                    bool resLine = hitTestLine(e.Location);
-                    Debug.WriteLine("OnPictureBoxMouseDown: EDIT: resLine="
-                        + resLine);
-                    redrawOverlay();
+                bool resLine = hitTestLine(e.Location);
+                Debug.WriteLine("OnPictureBoxMouseDown: EDIT: resLine="
+                    + resLine);
+                if (Control.ModifierKeys == Keys.Alt) {
+                    if (HitPoint != null) {
+                        HitPoint.Line.Points.RemoveAt(HitPoint.Index);
+                        redrawLines();
+                    }
+                } else if (Control.ModifierKeys == Keys.Shift) {
+                    if (HitLine != null) {
+                        addPoint(e.Location);
+                        redrawLines();
+                    }
                 }
+                redrawOverlay();
             } else if (ActiveMode == Mode.NORMAL) {
                 if (CurLine != null && e.Button == MouseButtons.Left) {
                     CurLine.addPoint(imagePoint(e.Location));
@@ -795,8 +905,7 @@ namespace MapLines {
                 ActiveMode = Mode.EDIT;
             } else {
                 ActiveMode = Mode.NORMAL;
-                HitLine = null;
-                HitPoint = null;
+                cleanupEdit();
             }
             pictureBox.Invalidate();
             pictureBox.Cursor = Cursors.Default;
@@ -805,8 +914,7 @@ namespace MapLines {
         private void OnPanClick(object sender, EventArgs e) {
             if (ActiveMode != Mode.PAN) {
                 ActiveMode = Mode.PAN;
-                HitLine = null;
-                HitPoint = null;
+                cleanupEdit();
                 pictureBox.Cursor = Cursors.Hand;
             } else {
                 ActiveMode = Mode.NORMAL;
@@ -818,7 +926,6 @@ namespace MapLines {
         private void OnResetClick(object sender, EventArgs e) {
             resetImage();
         }
-
 
         private void OnHelpOverviewClick(object sender, EventArgs e) {
             // Create, show, or set visible the overview dialog as appropriate
