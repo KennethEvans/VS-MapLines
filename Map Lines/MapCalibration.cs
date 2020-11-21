@@ -3,11 +3,8 @@ using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Factorization;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Net.NetworkInformation;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.RegularExpressions;
 
 namespace MapLines {

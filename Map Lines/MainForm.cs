@@ -943,11 +943,11 @@ namespace MapLines {
         private void OnHelpAboutClick(object sender, EventArgs e) {
             Assembly assembly = Assembly.GetExecutingAssembly();
             Image image = null;
-            //try {
-            //    image = Image.FromFile(@".\Help\GPXViewer256.png");
-            //} catch (Exception ex) {
-            //    Utils.excMsg("Failed to get AboutBox image", ex);
-            //}
+            try {
+                image = Image.FromFile(@".\Help\MapLines.256x256.png");
+            } catch (Exception ex) {
+                Utils.excMsg("Failed to get AboutBox image", ex);
+            }
             AboutBox dlg = new AboutBox(image, assembly);
             dlg.ShowDialog();
         }
@@ -971,7 +971,6 @@ namespace MapLines {
         private void OnCalibrationLinesClick(object sender, EventArgs e) {
             calibrationLines();
         }
-        #endregion
 
         private void OnEditLinesClick(object sender, EventArgs e) {
             if (Lines == null) {
@@ -982,6 +981,7 @@ namespace MapLines {
             dlg.Show();
             Lines.LinesList = dlg.LinesList;
         }
+        #endregion
     }
 
     public class HitPoint {
