@@ -12,6 +12,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>Map Lines.ico</PackageIcon>
     <Version>2.1.0</Version>
+    <ApplicationIcon>Map Lines.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
