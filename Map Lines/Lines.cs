@@ -1,5 +1,6 @@
 ﻿//#define TEST
 
+using KEUtils.InputDialog;
 using KEUtils.Utils;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml.Linq;
 
 namespace MapLines {
@@ -124,7 +126,7 @@ namespace MapLines {
                 using (StreamWriter outputFile = File.CreateText(fileName)) {
                     foreach (Line line in LinesList) {
                         outputFile.WriteLine(line.Desc);
-                         for (int j = 0; j < line.NPoints; j++) {
+                        for (int j = 0; j < line.NPoints; j++) {
                             point = line.Points[j];
                             outputFile.WriteLine(point.X + "," + point.Y);
                         }
@@ -138,9 +140,37 @@ namespace MapLines {
 
         public void writeGpxFile(String fileName, MapCalibration mapCalibration) {
             if (LinesList == null) return;
+            // Prompt for start time and avg speed
+            double speed = DEFAULT_SPEED;
+            InputDialog dlg = new InputDialog("Write GPX",
+                "Enter the average speed to use:", $"{DEFAULT_SPEED:N1}");
+            DialogResult res = dlg.ShowDialog();
+            if (res == DialogResult.OK) {
+                string val = dlg.Value;
+                try {
+                    speed = Convert.ToDouble(val);
+                } catch (Exception ex) {
+                    Utils.excMsg("Failed to get a valid speed, using "
+                        + DEFAULT_SPEED + " mph", ex);
+                }
+            }
+            DateTime startTime = DateTime.Now;
+            dlg = new InputDialog("Write GPX",
+                "Enter the local start time:", startTime.ToString());
+            res = dlg.ShowDialog();
+            if (res == DialogResult.OK) {
+                string val = dlg.Value;
+                try {
+                    startTime = Convert.ToDateTime(val);
+                } catch (Exception ex) {
+                    Utils.excMsg("Failed to get a valid starttime, " +
+                        "using the current time", ex);
+                }
+            }
+            // Convert to UTC for writing the GPX file
+            startTime = startTime.ToUniversalTime();
+            DateTime newTime = startTime;
             Point point;
-            DateTime now = DateTime.Now;
-            DateTime newTime = DateTime.Now;
             try {
                 using (StreamWriter outputFile = File.CreateText(fileName)) {
                     // Write header
@@ -158,7 +188,7 @@ namespace MapLines {
 
                     // Write metadata
                     outputFile.WriteLine("  <metadata>");
-                    outputFile.WriteLine("    <time>" + now.ToString(UTC_FORMAT) + "</time>");
+                    outputFile.WriteLine("    <time>" + startTime.ToString(UTC_FORMAT) + "</time>");
                     outputFile.WriteLine("  </metadata>");
 
                     // Write lines
@@ -192,8 +222,8 @@ namespace MapLines {
                             } else {
                                 dist = Math.Abs(Gps.M2MI *
                                     Gps.greatCircleDistance(lat0, lon0, vals[1], vals[0]));
-                                time = (long)(dist / DEFAULT_SPEED * 3600.0 * 1000.0);
-                                newTime.AddMilliseconds(time);
+                                time = (long)(dist / speed * 3600.0 * 1000.0);
+                                newTime = newTime.AddMilliseconds(time);
                                 lon0 = vals[0];
                                 lat0 = vals[1];
                             }
@@ -213,7 +243,7 @@ namespace MapLines {
             }
         }
 
-         /// <summary>
+        /// <summary>
         /// Reads lines from a file and adds them to the current lines.
         /// </summary>
         /// <param name="fileName"></param>
@@ -329,7 +359,7 @@ namespace MapLines {
     }
 
     public class Gps {
-                // GPS Constants
+        // GPS Constants
 
         /// <summary>
         /// Nominal radius of the earth in miles. The radius actually varies from

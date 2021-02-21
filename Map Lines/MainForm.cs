@@ -327,6 +327,8 @@ namespace MapLines {
         public void clearLines() {
             endLine();
             Lines.clear();
+            if (LinesImage != null) LinesImage.Dispose();
+            LinesImage = new Bitmap(Image.Width, Image.Height);
             cleanupEdit();
         }
 
