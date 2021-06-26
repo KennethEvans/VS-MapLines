@@ -37,6 +37,7 @@
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.openLinesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.linesFromGPXToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.linesFromGPXFileSetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.saveLinesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveLinesAsCSVToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -147,6 +148,7 @@
             this.toolStripSeparator7,
             this.openLinesToolStripMenuItem,
             this.linesFromGPXToolStripMenuItem,
+            this.linesFromGPXFileSetToolStripMenuItem,
             this.toolStripSeparator6,
             this.saveLinesToolStripMenuItem,
             this.saveLinesAsCSVToolStripMenuItem,
@@ -182,6 +184,13 @@
             this.linesFromGPXToolStripMenuItem.Size = new System.Drawing.Size(600, 54);
             this.linesFromGPXToolStripMenuItem.Text = "Lines from GPX...";
             this.linesFromGPXToolStripMenuItem.Click += new System.EventHandler(this.OnLinesFromGpxClick);
+            // 
+            // linesFromGPXFileSetToolStripMenuItem
+            // 
+            this.linesFromGPXFileSetToolStripMenuItem.Name = "linesFromGPXFileSetToolStripMenuItem";
+            this.linesFromGPXFileSetToolStripMenuItem.Size = new System.Drawing.Size(600, 54);
+            this.linesFromGPXFileSetToolStripMenuItem.Text = "Lines from GPX File Set...";
+            this.linesFromGPXFileSetToolStripMenuItem.Click += new System.EventHandler(this.OnLinesFromGpxFileSetClick);
             // 
             // toolStripSeparator6
             // 
@@ -466,6 +475,8 @@
         private System.Windows.Forms.ToolStripMenuItem overviewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveLinesAsCSVToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem linesFromGPXFileSetToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
     }
 }
 

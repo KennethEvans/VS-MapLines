@@ -22,12 +22,14 @@ namespace MapLines {
         public static readonly float HIT_TOLERANCE = 10;
         public static readonly Point INVALID_POINT =
             new Point(Int32.MinValue, Int32.MinValue);
+        public static readonly string Title = "Map Lines";
 
         public enum Mode { NORMAL, PAN, EDIT }
         public Mode ActiveMode { get; set; } = Mode.NORMAL;
 
         private static ScrolledHTMLDialog overviewDlg;
 
+        public string CurrentFileName { get; set; } = "";
         public Line HitLine { get; set; }
         public HitPoint HitPoint { get; set; }
 
@@ -146,13 +148,15 @@ namespace MapLines {
         /// the Current Image or loads a new one depending on replace.
         /// </summary>
         /// <param name="fileName">Name of an image file.</param>
-        /// <param name="replace">Whether to laod a new Image ffrom the fileName.</param>
+        /// <param name="replace">Whether to load a new Image from the fileName.</param>
         private void resetImage(string fileName, bool replace) {
             if (replace) {
                 if (Image != null) Image.Dispose();
                 Image = new Bitmap(fileName);
                 if (LinesImage != null) LinesImage.Dispose();
                 LinesImage = new Bitmap(Image.Width, Image.Height);
+                CurrentFileName = fileName;
+                Text = Title + ": " + CurrentFileName;
             }
             ZoomFactor = 1.0F;
             Size clientSize = pictureBox.ClientSize;
@@ -756,7 +760,6 @@ namespace MapLines {
             openFileDialog.CheckFileExists = true;
             openFileDialog.CheckPathExists = true;
             openFileDialog.Multiselect = true;
-
             if (openFileDialog.ShowDialog() == DialogResult.OK) {
                 string[] fileNames = openFileDialog.FileNames;
                 string curFileName = "<unknown>";
@@ -773,6 +776,68 @@ namespace MapLines {
                 } catch (Exception ex) {
                     Utils.excMsg("Error opening file:" + NL + curFileName, ex);
                     return;
+                }
+            }
+        }
+
+        private void OnLinesFromGpxFileSetClick(object sender, EventArgs e) {
+            if (MapCalibration == null) {
+                Utils.errMsg("Calibration for converting lines is not available");
+                return;
+            }
+            if (MapCalibration.Transform == null) {
+                Utils.errMsg("Calibration for converting lines is not valid");
+                return;
+            }
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "GPX File Sets|*.gpxfs"
+                + "|All files|*.*";
+            openFileDialog.FilterIndex = 1;
+            openFileDialog.RestoreDirectory = true;
+            openFileDialog.CheckFileExists = true;
+            openFileDialog.CheckPathExists = true;
+            openFileDialog.Multiselect = false;
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK) {
+                string listFile = openFileDialog.FileName;
+                List<string> failedList = new List<string>();
+                try {
+                    string curFileName = "<unknown>";
+                    int nTrkPoints = 0, nTrkPointsReturn;
+                    foreach (string newFileName in File.ReadAllLines(listFile)) {
+                        if (File.Exists(newFileName)) {
+                            try {
+                                curFileName = newFileName;
+                                nTrkPointsReturn = Lines.readGpxLines(newFileName,
+                                    MapCalibration);
+                                if (nTrkPointsReturn == 0) {
+                                    failedList.Add("No trackpoints: " + newFileName);
+                                } else {
+                                    nTrkPoints += nTrkPointsReturn;
+                                    redrawLines();
+                                }
+                            } catch (Exception ex) {
+                                // This is not likely to happen
+                                failedList.Add("Error opening: " + newFileName
+                                    + NL + ex.Message);
+                            }
+                        } else {
+                            failedList.Add("Does not exist: " + newFileName);
+                        }
+                    }
+                    if (nTrkPoints == 0) {
+                        Utils.warnMsg("No trackpoints were found");
+                    }
+                } catch (Exception ex) {
+                    Utils.excMsg("Failed to read " + listFile, ex);
+                }
+
+                if (failedList.Count > 0) {
+                    string msg = "Problems:" + NL;
+                    foreach (string msg1 in failedList) {
+                        msg += msg1 + NL;
+                    }
+                    Utils.errMsg(msg);
                 }
             }
         }
