@@ -805,6 +805,10 @@ namespace MapLines {
                     string curFileName = "<unknown>";
                     int nTrkPoints = 0, nTrkPointsReturn;
                     foreach (string newFileName in File.ReadAllLines(listFile)) {
+                        // Skip blank lines
+                        if (String.IsNullOrEmpty(newFileName)) continue;
+                        // Skip comments
+                        if (newFileName.StartsWith("#")) continue;
                         if (File.Exists(newFileName)) {
                             try {
                                 curFileName = newFileName;
