@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net5.0-windows</TargetFramework>
     <RootNamespace>MapLines</RootNamespace>
     <UseWindowsForms>true</UseWindowsForms>
     <Description>If this program works, it was written by Kenneth Evans.</Description>
@@ -11,7 +11,7 @@
     <Copyright>Copyright © Kenneth Evans 2020</Copyright>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>Map Lines.ico</PackageIcon>
-    <Version>2.4.0</Version>
+    <Version>2.3.0</Version>
     <ApplicationIcon>Map Lines.ico</ApplicationIcon>
   </PropertyGroup>
 
