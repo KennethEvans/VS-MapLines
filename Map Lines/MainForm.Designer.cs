@@ -46,6 +46,7 @@
             this.saveLinesWithImageAsPNGToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.overviewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.overviewOnlineToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panelImage = new System.Windows.Forms.Panel();
             this.pictureBox = new System.Windows.Forms.PictureBox();
@@ -100,7 +101,7 @@
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
             this.menuStrip.Padding = new System.Windows.Forms.Padding(6, 3, 0, 3);
-            this.menuStrip.Size = new System.Drawing.Size(1968, 51);
+            this.menuStrip.Size = new System.Drawing.Size(1968, 54);
             this.menuStrip.TabIndex = 1;
             this.menuStrip.Text = "menuStrip1";
             // 
@@ -112,7 +113,7 @@
             this.toolStripSeparator3,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(87, 45);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(87, 48);
             this.fileToolStripMenuItem.Text = "File";
             // 
             // openImageToolStripMenuItem
@@ -156,7 +157,7 @@
             this.saveLinesAsPNGToolStripMenuItem,
             this.saveLinesWithImageAsPNGToolStripMenuItem});
             this.linesToolStripMenuItem.Name = "linesToolStripMenuItem";
-            this.linesToolStripMenuItem.Size = new System.Drawing.Size(109, 45);
+            this.linesToolStripMenuItem.Size = new System.Drawing.Size(109, 48);
             this.linesToolStripMenuItem.Text = "Lines";
             // 
             // editLinesToolStripMenuItem
@@ -236,22 +237,30 @@
             // 
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.overviewToolStripMenuItem,
+            this.overviewOnlineToolStripMenuItem,
             this.aboutToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(104, 45);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(104, 48);
             this.helpToolStripMenuItem.Text = "Help";
             // 
             // overviewToolStripMenuItem
             // 
             this.overviewToolStripMenuItem.Name = "overviewToolStripMenuItem";
-            this.overviewToolStripMenuItem.Size = new System.Drawing.Size(306, 54);
+            this.overviewToolStripMenuItem.Size = new System.Drawing.Size(448, 54);
             this.overviewToolStripMenuItem.Text = "Overview";
             this.overviewToolStripMenuItem.Click += new System.EventHandler(this.OnHelpOverviewClick);
+            // 
+            // overviewOnlineToolStripMenuItem
+            // 
+            this.overviewOnlineToolStripMenuItem.Name = "overviewOnlineToolStripMenuItem";
+            this.overviewOnlineToolStripMenuItem.Size = new System.Drawing.Size(448, 54);
+            this.overviewOnlineToolStripMenuItem.Text = "Overview Online...";
+            this.overviewOnlineToolStripMenuItem.Click += new System.EventHandler(this.OnHelpOverviewOnlineClick);
             // 
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(306, 54);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(448, 54);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.OnHelpAboutClick);
             // 
@@ -260,10 +269,10 @@
             this.panelImage.AutoScroll = true;
             this.panelImage.Controls.Add(this.pictureBox);
             this.panelImage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelImage.Location = new System.Drawing.Point(3, 55);
+            this.panelImage.Location = new System.Drawing.Point(3, 58);
             this.panelImage.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.panelImage.Name = "panelImage";
-            this.panelImage.Size = new System.Drawing.Size(1962, 1353);
+            this.panelImage.Size = new System.Drawing.Size(1962, 1350);
             this.panelImage.TabIndex = 2;
             // 
             // pictureBox
@@ -273,7 +282,7 @@
             this.pictureBox.Location = new System.Drawing.Point(0, 0);
             this.pictureBox.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.pictureBox.Name = "pictureBox";
-            this.pictureBox.Size = new System.Drawing.Size(1962, 1353);
+            this.pictureBox.Size = new System.Drawing.Size(1962, 1350);
             this.pictureBox.TabIndex = 0;
             this.pictureBox.TabStop = false;
             this.pictureBox.Paint += new System.Windows.Forms.PaintEventHandler(this.OnPictureBoxPaint);
@@ -477,6 +486,7 @@
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem linesFromGPXFileSetToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem overviewOnlineToolStripMenuItem;
     }
 }
 

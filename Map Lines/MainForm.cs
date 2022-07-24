@@ -1011,6 +1011,19 @@ namespace MapLines {
             }
         }
 
+        private void OnHelpOverviewOnlineClick(object sender, EventArgs e) {
+            try {
+                // This form of Process.Start is apparently needed for .NET
+                // (as opposed to .NET Framework)
+                Process.Start(new ProcessStartInfo {
+                    FileName = "https://kenevans.net/opensource/MapLines/Help/Overview.html",
+                    UseShellExecute = true
+                });
+            } catch (Exception ex) {
+                Utils.excMsg("Failed to start browser", ex);
+            }
+        }
+
         private void OnHelpAboutClick(object sender, EventArgs e) {
             Assembly assembly = Assembly.GetExecutingAssembly();
             Image image = null;
