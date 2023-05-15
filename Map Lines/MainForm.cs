@@ -1,5 +1,6 @@
 ﻿using KEUtils.About;
 using KEUtils.ScrolledHTML;
+using KEUtils.ScrolledHTML2;
 using KEUtils.Utils;
 using System;
 using System.Collections.Generic;
@@ -27,7 +28,7 @@ namespace MapLines {
         public enum Mode { NORMAL, PAN, EDIT }
         public Mode ActiveMode { get; set; } = Mode.NORMAL;
 
-        private static ScrolledHTMLDialog overviewDlg;
+        private static ScrolledHTMLDialog2 overviewDlg;
 
         public string CurrentFileName { get; set; } = "";
         public Line HitLine { get; set; }
@@ -1002,7 +1003,7 @@ namespace MapLines {
             // Create, show, or set visible the overview dialog as appropriate
             if (overviewDlg == null) {
                 MainForm app = (MainForm)FindForm().FindForm();
-                overviewDlg = new ScrolledHTMLDialog(
+                overviewDlg = new ScrolledHTMLDialog2(
                     Utils.getDpiAdjustedSize(app, new Size(800, 600)),
                     "Overview", @"Help\Overview.html");
                 overviewDlg.Show();
